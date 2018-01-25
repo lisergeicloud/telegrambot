@@ -11,7 +11,6 @@ def ask(query):
     solution = None
     res = client.query(query)
     for pod in res.pods:
-        print(pod)
         if pod['@id'] in SOLUTIONS:
             subpod = pod['subpod']
             if isinstance(subpod, list):

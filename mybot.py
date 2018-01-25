@@ -32,15 +32,12 @@ def solve(bot, update, args):
 
 def matches(bot, update):
     print('Game started!')
-    rules = ['There are 21 Match Sticks.',
-             "You and bot will pick up the sticks in turn.",
-             "Sticks can be picked from 1 to 4.",
-             "The who, picked up the last stick, is the loser."]
     game = ACTIVE_GAMES.get(update.message.chat_id, None)
     if game is None:
         game = MatchesGame(chat_id=update.message.chat_id)
         ACTIVE_GAMES[update.message.chat_id] = game
     bot.send_message(chat_id=update.message.chat_id, text="MATCHES GAME. THE RULES:")
+    rules = game.RULES
     for k in rules:
         bot.send_message(chat_id=update.message.chat_id, text='- {};'.format(k))
     bot.send_message(chat_id=update.message.chat_id,
@@ -58,14 +55,16 @@ def exit(bot, update):
 
 
 def echo(bot, update):
-    text = update.message.text.strip()
+    text = update.message.text
     game = ACTIVE_GAMES.get(update.message.chat_id, None)
+    print(game)
     if game is not None:
         response = game.get_response(text)
         for r in response:
             bot.send_message(chat_id=update.message.chat_id, text=r)
-        return
-    bot.send_message(chat_id=update.message.chat_id, text=text)
+    else:
+        bot.send_message(chat_id=update.message.chat_id, text=text)
+
 
 
 start_handler = CommandHandler('start', start)
@@ -73,10 +72,13 @@ solve_handler = CommandHandler('solve', solve, pass_args=True)
 matches_handler = CommandHandler('matches', matches)
 exit_handler = CommandHandler('exit', exit)
 echo_handler = MessageHandler(Filters.text, echo)
+
 dispatcher.add_handler(start_handler)
 dispatcher.add_handler(solve_handler)
 dispatcher.add_handler(matches_handler)
 dispatcher.add_handler(exit_handler)
 dispatcher.add_handler(echo_handler)
 
-updater.start_polling()
+if __name__ == '__main__':
+    print("Starting bot ...")
+    updater.start_polling()
