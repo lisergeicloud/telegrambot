@@ -36,10 +36,7 @@ def matches(bot, update):
     if game is None:
         game = MatchesGame(chat_id=update.message.chat_id)
         ACTIVE_GAMES[update.message.chat_id] = game
-    bot.send_message(chat_id=update.message.chat_id, text="MATCHES GAME. THE RULES:")
-    rules = game.RULES
-    for k in rules:
-        bot.send_message(chat_id=update.message.chat_id, text='- {};'.format(k))
+    bot.send_message(chat_id=update.message.chat_id, text=game.RULES)
     bot.send_message(chat_id=update.message.chat_id,
                      text="It's your turn. Pick 1-4 matches. Or /exit.".format(game.MATCHES_NUM))
 

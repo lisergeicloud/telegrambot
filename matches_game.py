@@ -4,10 +4,11 @@ ACTIVE_GAMES = {}
 class MatchesGame:
     CHAT_ID = None
     MATCHES_NUM = 21
-    RULES = ['There are 21 Match Sticks.',
-             "You and bot will pick up the sticks in turn.",
-             "Sticks can be picked from 1 to 4.",
-             "The who, picked up the last stick, is the loser."]
+    RULES = "MATCHES GAME.\nTHE RULES:\n" \
+            "- There are 21 Match Sticks.\n" \
+            "- You and bot will pick up the sticks in turn.\n" \
+            "- Sticks can be picked from 1 to 4.\n" \
+            "- The who, picked up the last stick, is the loser."
 
     def __init__(self, chat_id):
         self.CHAT_ID = chat_id
@@ -26,8 +27,8 @@ class MatchesGame:
             return response
         else:
             TOTAL1, TOTAL2, bot_takes = self.process_move(value)
-            response.append('You took {} matches. {} matches left.'.format(value, TOTAL1))
-            response.append('I take {} matches. {} matches left.'.format(bot_takes, TOTAL2))
+            response.append('You took {} matches --> {} matches left.'.format(value, TOTAL1))
+            response.append('I take {} matches --> {} matches left.'.format(bot_takes, TOTAL2))
             if TOTAL1 == 1:
                 response.append('You win! :) Congratulations!')
                 del ACTIVE_GAMES[self.CHAT_ID]
