@@ -37,8 +37,7 @@ def matches(bot, update):
         game = MatchesGame(chat_id=update.message.chat_id)
         ACTIVE_GAMES[update.message.chat_id] = game
     bot.send_message(chat_id=update.message.chat_id, text=game.RULES)
-    bot.send_message(chat_id=update.message.chat_id,
-                     text="It's your turn. Pick 1-4 matches. Or /exit.".format(game.MATCHES_NUM))
+    bot.send_message(chat_id=update.message.chat_id, text='Do you want to make first move? (y/n)')
 
 
 def exit(bot, update):
@@ -52,16 +51,14 @@ def exit(bot, update):
 
 
 def echo(bot, update):
-    text = update.message.text
+    text = update.message.text.strip()
     game = ACTIVE_GAMES.get(update.message.chat_id, None)
-    print(game)
     if game is not None:
         response = game.get_response(text)
         for r in response:
             bot.send_message(chat_id=update.message.chat_id, text=r)
     else:
         bot.send_message(chat_id=update.message.chat_id, text=text)
-
 
 
 start_handler = CommandHandler('start', start)
