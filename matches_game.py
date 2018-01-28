@@ -21,11 +21,14 @@ class MatchesGame:
         if self.CHOOSE_ORDER_MODE:
             if text.lower() in ['y', 'yes']:
                 response.append("Ok, we have {} matches. Pick 1-4 matches.".format(self.MATCHES_NUM))
+                self.CHOOSE_ORDER_MODE = False
             elif text.lower() in ['n', 'no']:
                 response.append("Ok, I'll start. We had {} matches.".format(self.MATCHES_NUM))
                 TOTAL1, TOTAL2, bot_takes = self.process_move(0)
                 response.append('I take {} matches --> {} matches left. Your turn.'.format(bot_takes, TOTAL2))
-            self.CHOOSE_ORDER_MODE = False
+                self.CHOOSE_ORDER_MODE = False
+            else:
+                response.append('Yes or No? (y/n)')
             return response
         try:
             value = int(text)
