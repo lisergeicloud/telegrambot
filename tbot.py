@@ -12,6 +12,13 @@ from wolfram_api_client import ask
 
 SECOND = 2
 
+COMMANDS = [
+    ('/tictactoe', 'Tic-Tac-Toe 3X3'),
+    ('/tictactoe_5x5', 'Tic-Tac-Toe 5X5'),
+    ('/matches', 'Matches Game'),
+    ('/solve', 'Solve math tasks. Example: /solve x^3=27'),
+]
+
 
 class Zaebot:
     """
@@ -33,7 +40,10 @@ class Zaebot:
         self.human = {}
 
     def start(self, bot, update):
-        bot.send_message(chat_id=update.message.chat_id, text="I'm a bot, let's play!")
+        response = ['{} {}'.format(x, y) for x, y in COMMANDS]
+        response.insert(0, 'Make Your Choice:')
+        response = '\n'.join(response)
+        bot.send_message(chat_id=update.message.chat_id, text=response)
 
     def t3(self, bot, update):
         custom_kb = [['X'], ['O']]
@@ -247,6 +257,8 @@ class Zaebot:
     def handlers(self):
         start_handler = CommandHandler('start', self.start)
         self.dispatcher.add_handler(start_handler)
+        help_handler = CommandHandler('help', self.start)
+        self.dispatcher.add_handler(help_handler)
 
         conv_handler = ConversationHandler(
             entry_points=[CommandHandler('tictactoe', self.t3)],
