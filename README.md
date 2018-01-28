@@ -4,12 +4,14 @@
 * Ivan Osadchiy
 * Konstantin Kubrak
 * Sergey Li
-### To make it work properly, please, don't forget to specify Telegram bot token and Wolfram Alfa token.
-For example, you can create a file mytokens.py inside the project folder, which should contain:
+### 1. Don't forget to specify Telegram bot token and Wolfram Alfa token.
+In file **mytokens.py** replace placeholders with your tokens:
 ```python
 telegram_token = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 wolfram_token = 'yyyyyyyyyyyyyyyyyyyy'
 ```
-Those tokens will be imported and used by default.
+### 2. Install requirements (Python3)
+> pip3 install -r requirements.txt
 
-Or you can put them directly into the code (tbot.py, wolfram_api_client.py).
+### 3. Run the bot
+> python3 tbot.py
