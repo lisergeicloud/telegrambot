@@ -12,4 +12,4 @@ wolfram_token = 'yyyyyyyyyyyyyyyyyyyy'
 ```
 Those tokens will be imported and used by default.
 
-Or you can put them directly into the code (mybot.py, wolfram_api_client.py).
+Or you can put them directly into the code (tbot.py, wolfram_api_client.py).
