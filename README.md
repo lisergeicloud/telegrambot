@@ -1,5 +1,9 @@
 # Practical AI - Telegram bot
-
+## Group M2:
+* Anton Shilov
+* Ivan Osadchiy
+* Konstantin Kubrak
+* Sergey Li
 ### To make it work properly, please, don't forget to specify Telegram bot token and Wolfram Alfa token.
 For example, you can create a file mytokens.py inside the project folder, which should contain:
 ```python
