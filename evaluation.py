@@ -81,7 +81,7 @@ def evaluate_position(board, p):
 def attackArea(y, x):
     area = []
 
-    for pair in ((1,0), (0,1), (1,1), (1, -1)):
+    for pair in ((1, 0), (0, 1), (1, 1), (1, -1)):
         dy, dx = pair
 
         for s in (-1, 1):
@@ -99,16 +99,18 @@ def topAtoms(board, limit):
 
     for t in board.board_X + board.board_O:
         for m in attackArea(t[0], t[1]):
-            if board.in_board(m[0], m[1]):
+            if board.in_board(m[0], m[1]) and m[0] * board.board_width + m[1] in board.moves_available:
                 spots.add(m)
 
     for r in spots:
-        topqueue.put((evaluate_position(board, r)*(-1), r)) #eval_pos!
+        topqueue.put((evaluate_position(board, r)*(-1), r))
 
     toplist = []
+    i = 0
 
-    for x in range(limit):
+    while i < limit and not topqueue.empty():
         toplist.append(topqueue.get())
+        i += 1
 
     for i in range(len(toplist)):
         toplist[i] = (- toplist[i][0], toplist[i][1])
