@@ -6,6 +6,9 @@ from telegram import InlineKeyboardMarkup
 import console
 import board
 import alphabeta
+import gomokuconsole
+import gomokuboard
+import evaluation
 from mytokens import *
 from matches_game import MatchesGame, ACTIVE_GAMES
 from wolfram_api_client import ask
@@ -37,6 +40,7 @@ class Zaebot:
         self.updater = Updater(token=self.token)
         self.dispatcher = self.updater.dispatcher
         self.games = {}
+        self.games5 = {}
         self.human = {}
 
     def start(self, bot, update):
@@ -74,8 +78,8 @@ class Zaebot:
 
         for i in range(0, 9, 3):
             self.games[update.message.chat_id][1].append([telegram.InlineKeyboardButton(' ', callback_data=str(i)),
-                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i + 1)),
-                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i + 2))])
+                                   telegram.InlineKeyboardButton(' ', callback_data=str(i+1)),
+                                   telegram.InlineKeyboardButton(' ', callback_data=str(i+2))])
         reply = InlineKeyboardMarkup(self.games[update.message.chat_id][1])
 
         if human_move == board.State.O:
@@ -88,25 +92,28 @@ class Zaebot:
     def ttt5(self, bot, update):
         try:
             if update.message.text == "X":
-                human_move = board.State.X
+                human_move = gomokuboard.State.X
             elif update.message.text == 'O':
-                human_move = board.State.O
+                human_move = gomokuboard.State.O
         except:
             pass
         reply = telegram.ReplyKeyboardRemove()
         bot.send_message(chat_id=update.message.chat_id, text='Preparing...', reply_markup=reply)
-        self.board_size = 5
-        self.games[update.message.chat_id] = [console.Console(self.board_size), [], human_move]
-        for i in range(0, 25, 5):
-            self.games[update.message.chat_id][1].append([telegram.InlineKeyboardButton(' ', callback_data=str(i)),
-                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i + 1)),
-                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i + 2)),
-                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i + 3)),
-                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i + 4))])
-        reply = InlineKeyboardMarkup(self.games[update.message.chat_id][1])
+        self.board_size = 8
+        self.games5[update.message.chat_id] = [gomokuconsole.Console(self.board_size), [], human_move]
+        for i in range(0, 64, 8):
+            self.games5[update.message.chat_id][1].append([telegram.InlineKeyboardButton(' ', callback_data=str(i)),
+                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i+1)),
+                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i+2)),
+                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i+3)),
+                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i+4)),
+                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i+5)),
+                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i+6)),
+                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i+7))])
+        reply = InlineKeyboardMarkup(self.games5[update.message.chat_id][1])
 
-        if human_move == board.State.O:
-            self.play_move(bot, update, update.message.chat_id)
+        if human_move == gomokuboard.State.O:
+            self.play_move5(bot, update, update.message.chat_id)
 
         bot.send_message(chat_id=update.message.chat_id, text='Let\'s play, my dear opponent! ', reply_markup=reply)
 
@@ -148,21 +155,19 @@ class Zaebot:
         for i in range(self.board_size):
             for j in range(self.board_size):
                 if self.games[id][0].board.board[i][j] == board.State.X:
-                    self.games[id][1][i][j] = telegram.InlineKeyboardButton("❌",
-                                                                            callback_data=str(i * self.board_size + j))
+                    self.games[id][1][i][j] = telegram.InlineKeyboardButton("❌", callback_data=str(i*self.board_size + j))
                 elif self.games[id][0].board.board[i][j] == board.State.O:
-                    self.games[id][1][i][j] = telegram.InlineKeyboardButton('⭕️',
-                                                                            callback_data=str(i * self.board_size + j))
+                    self.games[id][1][i][j] = telegram.InlineKeyboardButton('⭕️', callback_data=str(i*self.board_size + j))
 
         reply = InlineKeyboardMarkup(self.games[id][1])
 
         if self.games[id][0].board.move_count == 1 and self.games[id][2] == board.State.O:
             pass
         elif mc < self.games[id][0].board.move_count:
-            bot.editMessageText(chat_id=update.callback_query.message.chat_id,
-                                message_id=update.callback_query.message.message_id,
+            bot.editMessageText(chat_id = update.callback_query.message.chat_id,
+                                message_id = update.callback_query.message.message_id,
                                 text='Let\'s play, my dear opponent! ',
-                                reply_markup=reply)
+                                reply_markup = reply)
 
     def get_player_move(self, bot, update, id):
 
@@ -175,7 +180,7 @@ class Zaebot:
                     chat_id=query.message.chat_id,
                     message_id=query.message.message_id,
                     text="Press on the blank box please",
-                    reply_markup=reply
+                    reply_markup = reply
                 )
             except telegram.error.BadRequest:
                 pass
@@ -201,9 +206,100 @@ class Zaebot:
             chat_id=query.message.chat_id,
             message_id=query.message.message_id,
             text=s,
-            reply_markup=reply
+            reply_markup = reply
         )
         del self.games[id]
+
+    def tictac5(self, bot, update):
+
+        id = update.callback_query.message.chat_id
+
+        print(id)
+
+        self.play_move5(bot, update, id)
+
+        if self.games5[id][0].board.game_over:
+            self.get_winner5(bot, update, id)
+            return -1
+
+        self.play_move5(bot, update, id)
+
+        if self.games5[id][0].board.game_over:
+            self.get_winner5(bot, update, id)
+            return -1
+
+        return 1
+
+    def play_move5(self, bot, update, id):
+        mc = self.games5[id][0].board.move_count
+
+        if self.games5[id][0].board.get_turn() == self.games5[id][2]:
+            self.get_player_move5(bot, update, id)
+        else:
+            if self.games5[id][0].board.move_count == 0:
+                pl_mv = evaluation.firstmove(self.games5[id][0].board)
+            elif self.games5[id][0].board.move_count == 1:
+                pl_mv = evaluation.secondmove(self.games5[id][0].board)
+            else:
+                pl_mv = evaluation.nextMove(self.games5[id][0].board, 2, 3)
+            self.games5[id][0].board.move(pl_mv)
+
+        for i in range(self.board_size):
+            for j in range(self.board_size):
+                if self.games5[id][0].board.board[i][j] == gomokuboard.State.X:
+                    self.games5[id][1][i][j] = telegram.InlineKeyboardButton("❌", callback_data=str(i*self.board_size + j))
+                elif self.games5[id][0].board.board[i][j] == gomokuboard.State.O:
+                    self.games5[id][1][i][j] = telegram.InlineKeyboardButton('⭕️', callback_data=str(i*self.board_size + j))
+
+        reply = InlineKeyboardMarkup(self.games5[id][1])
+
+        if self.games5[id][0].board.move_count == 1 and self.games5[id][2] == gomokuboard.State.O:
+            pass
+        elif mc < self.games5[id][0].board.move_count:
+            bot.editMessageText(chat_id = update.callback_query.message.chat_id,
+                                message_id = update.callback_query.message.message_id,
+                                text='Let\'s play, my dear opponent! ',
+                                reply_markup = reply)
+
+    def get_player_move5(self, bot, update, id):
+
+        move = int(update.callback_query.data)
+        if not self.games5[id][0].board.move(move):
+            try:
+                query = update.callback_query
+                reply = InlineKeyboardMarkup(self.games5[id][1])
+                bot.editMessageText(
+                    chat_id=query.message.chat_id,
+                    message_id=query.message.message_id,
+                    text="Press on the blank box please",
+                    reply_markup = reply
+                )
+            except telegram.error.BadRequest:
+                pass
+
+    def get_winner5(self, bot, update, id):
+        winner = self.games5[id][0].board.get_winner()
+
+        if winner == gomokuboard.State.Blank:
+            s = "The TicTacToe is a Draw."
+        else:
+            if winner == self.games5[id][2]:
+                s = "You won!"
+            else:
+                s = "AI won!"
+
+        s += "\nTo start a new game press please\n"
+        s += "/tictactoe_5x5"
+
+        query = update.callback_query
+        reply = InlineKeyboardMarkup(self.games5[id][1])
+        bot.editMessageText(
+            chat_id=query.message.chat_id,
+            message_id=query.message.message_id,
+            text=s,
+            reply_markup = reply
+        )
+        del self.games5[id]
 
     def solve(self, bot, update, args):
         """
@@ -273,7 +369,7 @@ class Zaebot:
             entry_points=[CommandHandler('tictactoe_5x5', self.t5)],
             states={
                 0: [MessageHandler(Filters.text, self.ttt5), CallbackQueryHandler(self.ttt5)],
-                1: [CallbackQueryHandler(self.tictac3)],
+                1: [CallbackQueryHandler(self.tictac5)],
             },
             fallbacks=[CommandHandler('start', self.start)]
         )
