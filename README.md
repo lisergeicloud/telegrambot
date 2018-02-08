@@ -12,6 +12,7 @@ wolfram_token = 'yyyyyyyyyyyyyyyyyyyy'
 ```
 ### 2. Install requirements (Python3)
 > pip3 install -r requirements.txt
+
 > apt install ffmpeg
 
 ### 3. Run the bot
