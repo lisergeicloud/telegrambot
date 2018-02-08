@@ -1,16 +1,19 @@
-import telegram
 import logging
-from telegram.ext import (Updater, Filters, CommandHandler, ConversationHandler, CallbackQueryHandler, MessageHandler)
-from telegram import InlineKeyboardMarkup
 
-import console
-import board
+import ffmpy
+import telegram
+import wit
+from telegram import InlineKeyboardMarkup
+from telegram.ext import (Updater, Filters, CommandHandler, ConversationHandler, CallbackQueryHandler, MessageHandler)
+
 import alphabeta
-import gomokuconsole
-import gomokuboard
+import board
+import console
 import evaluation
-from mytokens import *
+import gomokuboard
+import gomokuconsole
 from matches_game import MatchesGame, ACTIVE_GAMES
+from mytokens import *
 from wolfram_api_client import ask
 
 SECOND = 2
@@ -38,11 +41,13 @@ class Zaebot:
 
         self.custom_kb = []
         self.updater = Updater(token=self.token)
+        self.bot = self.updater.bot
         self.dispatcher = self.updater.dispatcher
         self.games = {}
         self.games5 = {}
         self.human = {}
-        self.dispatcher.add_handler(MessageHandler(Filters.voice,self.voice_handler))
+        self.witClient = wit.Wit(wit_token)
+        self.dispatcher.add_handler(MessageHandler(Filters.voice, self.voice_handler))
 
     def start(self, bot, update):
         response = ['{} {}'.format(x, y) for x, y in COMMANDS]
@@ -64,12 +69,24 @@ class Zaebot:
 
         return 0
 
-
-    def voice_handler(bot, update):
-        file = bot.getFile(update.message.voice.file_id)
+    def voice_handler(self, bot, update):
+        file = self.bot.getFile(update.message.voice.file_id)
         print("file_id: " + str(update.message.voice.file_id))
-        file.download('voice.ogg')
+        path = 'voice.ogg'
+        file.download(path)
+        output = self.convert_to_mp3(path)
+        with open(output, 'rb') as f:
+            resp = self.witClient.speech(f, None, {'Content-Type': 'audio/mpeg3'})
+        text = resp['_text']
+        update.message.reply_text('Did you say: \"' + text + '\"?')
 
+    # $ ffmpeg - i voice.ogg - ac 1 voice.mp3
+    def convert_to_mp3(self, path):
+        output = 'voice.mp3'
+        ff = ffmpy.FFmpeg(global_options=['-y'], inputs={path: None}, outputs={output: '-ac 1'})
+        print(ff.cmd)
+        ff.run()
+        return output
 
     def ttt3(self, bot, update):
         try:
@@ -86,8 +103,8 @@ class Zaebot:
 
         for i in range(0, 9, 3):
             self.games[update.message.chat_id][1].append([telegram.InlineKeyboardButton(' ', callback_data=str(i)),
-                                   telegram.InlineKeyboardButton(' ', callback_data=str(i+1)),
-                                   telegram.InlineKeyboardButton(' ', callback_data=str(i+2))])
+                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i + 1)),
+                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i + 2))])
         reply = InlineKeyboardMarkup(self.games[update.message.chat_id][1])
 
         if human_move == board.State.O:
@@ -111,13 +128,14 @@ class Zaebot:
         self.games5[update.message.chat_id] = [gomokuconsole.Console(self.board_size), [], human_move]
         for i in range(0, 64, 8):
             self.games5[update.message.chat_id][1].append([telegram.InlineKeyboardButton(' ', callback_data=str(i)),
-                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i+1)),
-                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i+2)),
-                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i+3)),
-                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i+4)),
-                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i+5)),
-                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i+6)),
-                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i+7))])
+                                                           telegram.InlineKeyboardButton(' ', callback_data=str(i + 1)),
+                                                           telegram.InlineKeyboardButton(' ', callback_data=str(i + 2)),
+                                                           telegram.InlineKeyboardButton(' ', callback_data=str(i + 3)),
+                                                           telegram.InlineKeyboardButton(' ', callback_data=str(i + 4)),
+                                                           telegram.InlineKeyboardButton(' ', callback_data=str(i + 5)),
+                                                           telegram.InlineKeyboardButton(' ', callback_data=str(i + 6)),
+                                                           telegram.InlineKeyboardButton(' ',
+                                                                                         callback_data=str(i + 7))])
         reply = InlineKeyboardMarkup(self.games5[update.message.chat_id][1])
 
         if human_move == gomokuboard.State.O:
@@ -163,19 +181,21 @@ class Zaebot:
         for i in range(self.board_size):
             for j in range(self.board_size):
                 if self.games[id][0].board.board[i][j] == board.State.X:
-                    self.games[id][1][i][j] = telegram.InlineKeyboardButton("❌", callback_data=str(i*self.board_size + j))
+                    self.games[id][1][i][j] = telegram.InlineKeyboardButton("❌",
+                                                                            callback_data=str(i * self.board_size + j))
                 elif self.games[id][0].board.board[i][j] == board.State.O:
-                    self.games[id][1][i][j] = telegram.InlineKeyboardButton('⭕️', callback_data=str(i*self.board_size + j))
+                    self.games[id][1][i][j] = telegram.InlineKeyboardButton('⭕️',
+                                                                            callback_data=str(i * self.board_size + j))
 
         reply = InlineKeyboardMarkup(self.games[id][1])
 
         if self.games[id][0].board.move_count == 1 and self.games[id][2] == board.State.O:
             pass
         elif mc < self.games[id][0].board.move_count:
-            bot.editMessageText(chat_id = update.callback_query.message.chat_id,
-                                message_id = update.callback_query.message.message_id,
+            bot.editMessageText(chat_id=update.callback_query.message.chat_id,
+                                message_id=update.callback_query.message.message_id,
                                 text='Let\'s play, my dear opponent! ',
-                                reply_markup = reply)
+                                reply_markup=reply)
 
     def get_player_move(self, bot, update, id):
 
@@ -188,7 +208,7 @@ class Zaebot:
                     chat_id=query.message.chat_id,
                     message_id=query.message.message_id,
                     text="Press on the blank box please",
-                    reply_markup = reply
+                    reply_markup=reply
                 )
             except telegram.error.BadRequest:
                 pass
@@ -214,7 +234,7 @@ class Zaebot:
             chat_id=query.message.chat_id,
             message_id=query.message.message_id,
             text=s,
-            reply_markup = reply
+            reply_markup=reply
         )
         del self.games[id]
 
@@ -255,19 +275,21 @@ class Zaebot:
         for i in range(self.board_size):
             for j in range(self.board_size):
                 if self.games5[id][0].board.board[i][j] == gomokuboard.State.X:
-                    self.games5[id][1][i][j] = telegram.InlineKeyboardButton("❌", callback_data=str(i*self.board_size + j))
+                    self.games5[id][1][i][j] = telegram.InlineKeyboardButton("❌",
+                                                                             callback_data=str(i * self.board_size + j))
                 elif self.games5[id][0].board.board[i][j] == gomokuboard.State.O:
-                    self.games5[id][1][i][j] = telegram.InlineKeyboardButton('⭕️', callback_data=str(i*self.board_size + j))
+                    self.games5[id][1][i][j] = telegram.InlineKeyboardButton('⭕️',
+                                                                             callback_data=str(i * self.board_size + j))
 
         reply = InlineKeyboardMarkup(self.games5[id][1])
 
         if self.games5[id][0].board.move_count == 1 and self.games5[id][2] == gomokuboard.State.O:
             pass
         elif mc < self.games5[id][0].board.move_count:
-            bot.editMessageText(chat_id = update.callback_query.message.chat_id,
-                                message_id = update.callback_query.message.message_id,
+            bot.editMessageText(chat_id=update.callback_query.message.chat_id,
+                                message_id=update.callback_query.message.message_id,
                                 text='Let\'s play, my dear opponent! ',
-                                reply_markup = reply)
+                                reply_markup=reply)
 
     def get_player_move5(self, bot, update, id):
 
@@ -280,7 +302,7 @@ class Zaebot:
                     chat_id=query.message.chat_id,
                     message_id=query.message.message_id,
                     text="Press on the blank box please",
-                    reply_markup = reply
+                    reply_markup=reply
                 )
             except telegram.error.BadRequest:
                 pass
@@ -305,7 +327,7 @@ class Zaebot:
             chat_id=query.message.chat_id,
             message_id=query.message.message_id,
             text=s,
-            reply_markup = reply
+            reply_markup=reply
         )
         del self.games5[id]
 
