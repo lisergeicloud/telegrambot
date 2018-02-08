@@ -42,6 +42,7 @@ class Zaebot:
         self.games = {}
         self.games5 = {}
         self.human = {}
+        self.dispatcher.add_handler(MessageHandler(Filters.voice,self.voice_handler))
 
     def start(self, bot, update):
         response = ['{} {}'.format(x, y) for x, y in COMMANDS]
@@ -62,6 +63,13 @@ class Zaebot:
         bot.sendMessage(chat_id=update.message.chat_id, text='Choose your side:', reply_markup=reply)
 
         return 0
+
+
+    def voice_handler(bot, update):
+        file = bot.getFile(update.message.voice.file_id)
+        print("file_id: " + str(update.message.voice.file_id))
+        file.download('voice.ogg')
+
 
     def ttt3(self, bot, update):
         try:
