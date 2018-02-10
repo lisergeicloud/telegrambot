@@ -335,10 +335,10 @@ class Zaebot:
         """
         Solve math tasks using Wolfram Alpha.
         """
-        if not ''.join(args):
-            result = 'You need to specify a task. For example, "\solve x+1=4"'
-            bot.send_message(chat_id=update.message.chat_id, text=result)
-            return
+        # if not ''.join(args):
+        #     result = 'You need to specify a task. For example, "\solve x+1=4"'
+        #     bot.send_message(chat_id=update.message.chat_id, text=result)
+        #     return
         request = ' '.join(args)
         result = ask(request)
         if result is None:
