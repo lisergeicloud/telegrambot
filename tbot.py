@@ -75,7 +75,7 @@ class Zaebot:
 
     def translate(self, bot, update):
         text = update.message.text.strip()
-        text = text.split('translate')[-1].strip()
+        text = text.lower().split('translate')[-1].strip()
         try:
             response = translate_this(text)
         except Exception as e:
@@ -105,7 +105,7 @@ class Zaebot:
         output = self.convert_to_mp3(path)
         with open(output, 'rb') as f:
             resp = self.witClient.speech(f, None, {'Content-Type': 'audio/mpeg3'})
-        text = resp['_text']
+        text = resp['_text'].lower()
         print(text)
         if 'joke' in text:
             about = text.split('joke')[-1]
