@@ -4,11 +4,12 @@
 * Ivan Osadchiy
 * Konstantin Kubrak
 * Sergey Li
-### 1. Specify your Telegram bot and Wolfram Alfa tokens.
+### 1. Specify your Telegram bot, Wolfram Alfa and Wit.ai tokens.
 In **mytokens.py** file replace placeholders with your tokens:
 ```python
 telegram_token = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 wolfram_token = 'yyyyyyyyyyyyyyyyyyyy'
+wit_token = "zzzzzzzzzzzzzzzzzzzzzzzzzz"
 ```
 ### 2. Install requirements (Python3)
 > pip3 install -r requirements.txt
