@@ -67,6 +67,7 @@ class Zaebot:
             response = get_jokes(text)
         except Exception as e:
             response = str(e)
+        print(response)
         bot.send_message(chat_id=update.message.chat_id, text=response)
 
     def t3(self, bot, update):
@@ -92,7 +93,14 @@ class Zaebot:
         with open(output, 'rb') as f:
             resp = self.witClient.speech(f, None, {'Content-Type': 'audio/mpeg3'})
         text = resp['_text']
-        update.message.reply_text('Did you say: \"' + text + '\"?')
+        print(text)
+        if 'joke' in text:
+            about = text.split('joke')[-1]
+            update.message.reply_text("Oh, you want a joke {}. Let's see...".format(about))
+            update.message.text = text
+            self.joke(bot, update)
+        else:
+            update.message.reply_text('Did you say: \"' + text + '\"?')
 
     # $ ffmpeg - i voice.ogg - ac 1 voice.mp3
     def convert_to_mp3(self, path):
@@ -422,14 +430,13 @@ class Zaebot:
         solve_handler = CommandHandler('solve', self.solve, pass_args=True)
         matches_handler = CommandHandler('matches', self.matches)
         exit_handler = CommandHandler('exit', exit)
-        joke_handler = MessageHandler(joke_filter, self.joke)
+        joke_handler = MessageHandler(Filters.text & joke_filter, self.joke)
         self.dispatcher.add_handler(joke_handler)
         move_handler = MessageHandler(Filters.text, self.move)
         self.dispatcher.add_handler(solve_handler)
         self.dispatcher.add_handler(matches_handler)
         self.dispatcher.add_handler(exit_handler)
         self.dispatcher.add_handler(move_handler)
-
 
 
 if __name__ == '__main__':
