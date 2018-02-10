@@ -16,9 +16,11 @@ from matches_game import MatchesGame, ACTIVE_GAMES
 from mytokens import *
 from wolfram_api_client import ask
 from joker import get_jokes
-from filters import FilterJoke
+from filters import FilterJoke, FilterTranslate
+from ya_translater import translate_this
 
 joke_filter = FilterJoke()
+translate_filter = FilterTranslate()
 
 SECOND = 2
 
@@ -27,7 +29,8 @@ COMMANDS = [
     ('/tictactoe_5x5', 'Tic-Tac-Toe 5X5'),
     ('/matches', 'Matches Game'),
     ('/solve', 'Solve math tasks. Example: /solve x^3=27'),
-    ('', '"Tell me a joke about ..."'),
+    ('Ask for a joke: ', '"Tell me a joke about ..."'),
+    ('Ask for a translation: ', '"Translate ..."'),
     ('', 'You can use voice input function.'),
 ]
 
@@ -70,6 +73,16 @@ class Zaebot:
         print(response)
         bot.send_message(chat_id=update.message.chat_id, text=response)
 
+    def translate(self, bot, update):
+        text = update.message.text.strip()
+        text = text.split('translate')[-1].strip()
+        try:
+            response = translate_this(text)
+        except Exception as e:
+            response = str(e)
+        print(response)
+        bot.send_message(chat_id=update.message.chat_id, text=response)
+
     def t3(self, bot, update):
         custom_kb = [['X'], ['O']]
         reply = telegram.ReplyKeyboardMarkup(custom_kb)
@@ -99,6 +112,10 @@ class Zaebot:
             update.message.reply_text("Oh, you want a joke {}. Let's see...".format(about))
             update.message.text = text
             self.joke(bot, update)
+        elif 'translate' in text:
+            text_to_translate = text.split('translate')[-1].strip()
+            response = translate_this(text_to_translate)
+            update.message.reply_text(response)
         else:
             update.message.reply_text('Did you say: \"' + text + '\"?')
 
@@ -432,6 +449,8 @@ class Zaebot:
         exit_handler = CommandHandler('exit', exit)
         joke_handler = MessageHandler(Filters.text & joke_filter, self.joke)
         self.dispatcher.add_handler(joke_handler)
+        translate_handler = MessageHandler(Filters.text & translate_filter, self.translate)
+        self.dispatcher.add_handler(translate_handler)
         move_handler = MessageHandler(Filters.text, self.move)
         self.dispatcher.add_handler(solve_handler)
         self.dispatcher.add_handler(matches_handler)
