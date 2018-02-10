@@ -27,6 +27,8 @@ COMMANDS = [
     ('/tictactoe_5x5', 'Tic-Tac-Toe 5X5'),
     ('/matches', 'Matches Game'),
     ('/solve', 'Solve math tasks. Example: /solve x^3=27'),
+    ('', '"Tell me a joke about ..."'),
+    ('', 'You can use voice input function.'),
 ]
 
 
