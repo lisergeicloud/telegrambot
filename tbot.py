@@ -108,7 +108,7 @@ class Zaebot:
         text = resp['_text'].lower()
         print(text)
         if 'joke' in text:
-            about = text.split('joke')[-1]
+            about = text.split('joke')[-1].strip()
             update.message.reply_text("Oh, you want a joke {}. Let's see...".format(about))
             update.message.text = text
             self.joke(bot, update)
