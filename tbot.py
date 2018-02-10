@@ -15,6 +15,10 @@ import gomokuconsole
 from matches_game import MatchesGame, ACTIVE_GAMES
 from mytokens import *
 from wolfram_api_client import ask
+from joker import get_jokes
+from filters import FilterJoke
+
+joke_filter = FilterJoke()
 
 SECOND = 2
 
@@ -53,6 +57,14 @@ class Zaebot:
         response = ['{} {}'.format(x, y) for x, y in COMMANDS]
         response.insert(0, 'Make Your Choice:')
         response = '\n'.join(response)
+        bot.send_message(chat_id=update.message.chat_id, text=response)
+
+    def joke(self, bot, update):
+        text = update.message.text.strip()
+        try:
+            response = get_jokes(text)
+        except Exception as e:
+            response = str(e)
         bot.send_message(chat_id=update.message.chat_id, text=response)
 
     def t3(self, bot, update):
@@ -377,8 +389,6 @@ class Zaebot:
             response = game.get_response(text)
             for r in response:
                 bot.send_message(chat_id=update.message.chat_id, text=r)
-        else:
-            bot.send_message(chat_id=update.message.chat_id, text=text)
 
     def handlers(self):
         start_handler = CommandHandler('start', self.start)
@@ -410,11 +420,14 @@ class Zaebot:
         solve_handler = CommandHandler('solve', self.solve, pass_args=True)
         matches_handler = CommandHandler('matches', self.matches)
         exit_handler = CommandHandler('exit', exit)
+        joke_handler = MessageHandler(joke_filter, self.joke)
+        self.dispatcher.add_handler(joke_handler)
         move_handler = MessageHandler(Filters.text, self.move)
         self.dispatcher.add_handler(solve_handler)
         self.dispatcher.add_handler(matches_handler)
         self.dispatcher.add_handler(exit_handler)
         self.dispatcher.add_handler(move_handler)
+
 
 
 if __name__ == '__main__':
