@@ -29,17 +29,17 @@ class MatchesGame:
                 self.CHOOSE_ORDER_MODE = False
             else:
                 response.append('Yes or No? (y/n)')
-            return response
+            return 1, response
         try:
             value = int(text)
         except ValueError:
             result = 'No. You can enter only a number from 1 to 4.'
             response.append(result)
-            return response
+            return 1, response
         if not text.isdigit() or value not in [1, 2, 3, 4]:
             result = 'No. You can enter only a number from 1 to 4.'
             response.append(result)
-            return response
+            return 1, response
         else:
             TOTAL1, TOTAL2, bot_takes = self.process_move(value)
             response.append('You took {} matches --> {} matches left.'.format(value, TOTAL1))
@@ -47,13 +47,14 @@ class MatchesGame:
             if TOTAL1 == 1:
                 response.append('You win! :) Congratulations!')
                 del ACTIVE_GAMES[self.CHAT_ID]
-                return response
+                return -1, response
             if TOTAL2 == 1:
                 response.append('YOU LOST. :( The game is finished.')
                 del ACTIVE_GAMES[self.CHAT_ID]
+                return -1, response
             else:
                 response.append('Your turn.')
-            return response
+                return 1, response
 
     def process_move(self, matches_taken):
         TOTAL1 = self.MATCHES_NUM - matches_taken

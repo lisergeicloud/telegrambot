@@ -113,9 +113,8 @@ class Zaebot:
             update.message.text = text
             self.joke(bot, update)
         elif 'translate' in text:
-            text_to_translate = text.split('translate')[-1].strip()
-            response = translate_this(text_to_translate)
-            update.message.reply_text(response)
+            update.message.text = text
+            self.translate(bot, update)
         else:
             update.message.reply_text('Did you say: \"' + text + '\"?')
 
@@ -394,6 +393,7 @@ class Zaebot:
             ACTIVE_GAMES[update.message.chat_id] = game
         bot.send_message(chat_id=update.message.chat_id, text=game.RULES)
         bot.send_message(chat_id=update.message.chat_id, text='Do you want to make first move? (y/n)')
+        return 1
 
     def exit(self, bot, update):
         """
@@ -405,6 +405,7 @@ class Zaebot:
             pass
         response = "The game is finished."
         bot.send_message(chat_id=update.message.chat_id, text=response)
+        return -1
 
     def move(self, bot, update):
         """
@@ -412,10 +413,12 @@ class Zaebot:
         """
         text = update.message.text.strip()
         game = ACTIVE_GAMES.get(update.message.chat_id, None)
+        code = 1
         if game is not None:
-            response = game.get_response(text)
+            code, response = game.get_response(text)
             for r in response:
                 bot.send_message(chat_id=update.message.chat_id, text=r)
+        return code
 
     def handlers(self):
         start_handler = CommandHandler('start', self.start)
@@ -445,17 +448,22 @@ class Zaebot:
         self.dispatcher.add_handler(conv_handler_5)
 
         solve_handler = CommandHandler('solve', self.solve, pass_args=True)
-        matches_handler = CommandHandler('matches', self.matches)
-        exit_handler = CommandHandler('exit', exit)
+
+        matches_handler = ConversationHandler(
+            entry_points=[CommandHandler('matches', self.matches)],
+            states={
+                1: [CommandHandler('exit', self.exit), MessageHandler(Filters.text, self.move)],
+            },
+            fallbacks=[CommandHandler('start', self.start)]
+        )
+        self.dispatcher.add_handler(matches_handler)
+
         joke_handler = MessageHandler(Filters.text & joke_filter, self.joke)
         self.dispatcher.add_handler(joke_handler)
         translate_handler = MessageHandler(Filters.text & translate_filter, self.translate)
         self.dispatcher.add_handler(translate_handler)
-        move_handler = MessageHandler(Filters.text, self.move)
+
         self.dispatcher.add_handler(solve_handler)
-        self.dispatcher.add_handler(matches_handler)
-        self.dispatcher.add_handler(exit_handler)
-        self.dispatcher.add_handler(move_handler)
 
 
 if __name__ == '__main__':
