@@ -4,7 +4,11 @@ import ffmpy
 import telegram
 import wit
 from telegram import InlineKeyboardMarkup
-from telegram.ext import (Updater, Filters, CommandHandler, ConversationHandler, CallbackQueryHandler, MessageHandler)
+from telegram.ext import (Updater, Filters,
+                          CommandHandler,
+                          ConversationHandler,
+                          CallbackQueryHandler,
+                          MessageHandler, RegexHandler)
 
 import alphabeta
 import board
@@ -26,13 +30,15 @@ SECOND = 2
 
 COMMANDS = [
     ('/tictactoe', 'Tic-Tac-Toe 3X3'),
-    ('/tictactoe_5x5', 'Tic-Tac-Toe 5X5'),
     ('/matches', 'Matches Game'),
     ('/solve', 'Solve math tasks. Example: /solve x^3=27'),
     ('Ask for a joke: ', '"Tell me a joke about ..."'),
     ('Ask for a translation: ', '"Translate ..."'),
     ('', 'You can use voice input function.'),
 ]
+
+GAME_COMMANDS = ['play', 'run']
+SOLVE_COMMANDS = ['estimate', 'solve', 'calculate', 'compute', 'quantify', 'assess', 'evaluate']
 
 
 class Zaebot:
@@ -65,6 +71,9 @@ class Zaebot:
         bot.send_message(chat_id=update.message.chat_id, text=response)
 
     def plain_text_manager(self, bot, update):
+        '''
+        This function parses plain text messages and executes correspondent rules. 
+        '''
         text = update.message.text.strip().lower()
         if 'joke' in text:
             about = text.split('joke')[-1].strip()
@@ -84,14 +93,28 @@ class Zaebot:
             print(response)
             update.message.reply_text(response)
         else:
+            text_list = text.split()
+            for w in SOLVE_COMMANDS:
+                if w in text_list:
+                    text = text.split(w)[-1].strip()
+                    self.solve(bot, update, text.split())
+                    return
             update.message.reply_text('Did you say: \"' + text + '\"?')
 
     def t3(self, bot, update):
-        custom_kb = [['X'], ['O']]
-        reply = telegram.ReplyKeyboardMarkup(custom_kb)
-        bot.sendMessage(chat_id=update.message.chat_id, text='Choose your side:', reply_markup=reply)
+        bot.sendMessage(chat_id=update.message.chat_id, text='Choose board size: 3 or 5')
+        return 2
 
-        return 0
+    def ttt_size(self, bot, update):
+        board_size = update.message.text.strip()
+        if board_size not in ['3', '5']:
+            bot.sendMessage(chat_id=update.message.chat_id, text='No. Choose 3 or 5!')
+            return 2
+        else:
+            custom_kb = [['X'], ['O']]
+            reply = telegram.ReplyKeyboardMarkup(custom_kb)
+            bot.sendMessage(chat_id=update.message.chat_id, text='Choose your side:', reply_markup=reply)
+            return int(board_size)
 
     def t5(self, bot, update):
         custom_kb = [['X'], ['O']]
@@ -145,7 +168,7 @@ class Zaebot:
 
         bot.send_message(chat_id=update.message.chat_id, text='Let\'s play, my dear opponent! ', reply_markup=reply)
 
-        return 1
+        return 13
 
     def ttt5(self, bot, update):
         try:
@@ -176,7 +199,7 @@ class Zaebot:
 
         bot.send_message(chat_id=update.message.chat_id, text='Let\'s play, my dear opponent! ', reply_markup=reply)
 
-        return 1
+        return 15
 
     def tictac3(self, bot, update):
 
@@ -196,7 +219,7 @@ class Zaebot:
             self.get_winner(bot, update, id)
             return -1
 
-        return 1
+        return 13
 
     def play_move(self, bot, update, id):
         mc = self.games[id][0].board.move_count
@@ -254,12 +277,7 @@ class Zaebot:
         else:
             s = "Player " + str(winner.name) + " wins!"
 
-        if self.games[id][0].board.board_width == 3:
-            s += "\nTo start a new game press please\n"
-            s += "/tictactoe"
-        elif self.games[id][0].board.board_width == 5:
-            s += "\nTo start a new game press please\n"
-            s += "/tictactoe_5x5"
+        s += "\nTo start a new game press please /tictactoe"
 
         query = update.callback_query
         reply = InlineKeyboardMarkup(self.games[id][1])
@@ -289,7 +307,7 @@ class Zaebot:
             self.get_winner5(bot, update, id)
             return -1
 
-        return 1
+        return 15
 
     def play_move5(self, bot, update, id):
         mc = self.games5[id][0].board.move_count
@@ -351,8 +369,7 @@ class Zaebot:
             else:
                 s = "AI won!"
 
-        s += "\nTo start a new game press please\n"
-        s += "/tictactoe_5x5"
+        s += "\nTo start a new game press please /tictactoe"
 
         query = update.callback_query
         reply = InlineKeyboardMarkup(self.games5[id][1])
@@ -416,46 +433,35 @@ class Zaebot:
         return code
 
     def handlers(self):
-        start_handler = CommandHandler('start', self.start)
-        self.dispatcher.add_handler(start_handler)
-        help_handler = CommandHandler('help', self.start)
-        self.dispatcher.add_handler(help_handler)
+        self.dispatcher.add_handler(CommandHandler('start', self.start))
+        self.dispatcher.add_handler(CommandHandler('help', self.start))
+        self.dispatcher.add_handler(CommandHandler('solve', self.solve, pass_args=True))
 
         conv_handler = ConversationHandler(
-            entry_points=[CommandHandler('tictactoe', self.t3)],
+            entry_points=[CommandHandler('tictactoe', self.t3),
+                          RegexHandler(pattern=".*([Pp]lay|[Rr]un).*tic.*tac.*toe.*", callback=self.t3)],
             states={
-                0: [MessageHandler(Filters.text, self.ttt3), CallbackQueryHandler(self.ttt3)],
-                1: [CallbackQueryHandler(self.tictac3)]
-            },
-            fallbacks=[CommandHandler('start', self.start)]
-        )
-
-        conv_handler_5 = ConversationHandler(
-            entry_points=[CommandHandler('tictactoe_5x5', self.t5)],
-            states={
-                0: [MessageHandler(Filters.text, self.ttt5), CallbackQueryHandler(self.ttt5)],
-                1: [CallbackQueryHandler(self.tictac5)],
+                2: [MessageHandler(Filters.text, self.ttt_size)],
+                13: [CallbackQueryHandler(self.tictac3)],
+                15: [CallbackQueryHandler(self.tictac5)],
+                3: [MessageHandler(Filters.text, self.ttt3), CallbackQueryHandler(self.ttt3)],
+                5: [MessageHandler(Filters.text, self.ttt5), CallbackQueryHandler(self.ttt5)]
             },
             fallbacks=[CommandHandler('start', self.start)]
         )
 
         self.dispatcher.add_handler(conv_handler)
-        self.dispatcher.add_handler(conv_handler_5)
-
-        solve_handler = CommandHandler('solve', self.solve, pass_args=True)
-        self.dispatcher.add_handler(solve_handler)
 
         matches_handler = ConversationHandler(
-            entry_points=[CommandHandler('matches', self.matches)],
+            entry_points=[CommandHandler('matches', self.matches),
+                          RegexHandler(pattern=".*([Pp]lay|[Rr]un).*matches.*", callback=self.matches)],
             states={
                 1: [CommandHandler('exit', self.exit), MessageHandler(Filters.text, self.move)],
             },
             fallbacks=[CommandHandler('start', self.start)]
         )
         self.dispatcher.add_handler(matches_handler)
-
-        text_handler = MessageHandler(Filters.text, self.plain_text_manager)
-        self.dispatcher.add_handler(text_handler)
+        self.dispatcher.add_handler(MessageHandler(Filters.text, self.plain_text_manager))
 
 
 if __name__ == '__main__':
