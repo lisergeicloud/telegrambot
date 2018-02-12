@@ -64,24 +64,27 @@ class Zaebot:
         response = '\n'.join(response)
         bot.send_message(chat_id=update.message.chat_id, text=response)
 
-    def joke(self, bot, update):
-        text = update.message.text.strip()
-        try:
-            response = get_jokes(text)
-        except Exception as e:
-            response = str(e)
-        print(response)
-        bot.send_message(chat_id=update.message.chat_id, text=response)
-
-    def translate(self, bot, update):
-        text = update.message.text.strip()
-        text = text.lower().split('translate')[-1].strip()
-        try:
-            response = translate_this(text)
-        except Exception as e:
-            response = str(e)
-        print(response)
-        bot.send_message(chat_id=update.message.chat_id, text=response)
+    def plain_text_manager(self, bot, update):
+        text = update.message.text.strip().lower()
+        if 'joke' in text:
+            about = text.split('joke')[-1].strip()
+            update.message.reply_text("Oh, you want a joke {}. Let's see...".format(about))
+            try:
+                response = get_jokes(text)
+            except Exception as e:
+                response = str(e)
+            print(response)
+            update.message.reply_text(response)
+        elif 'translate' in text:
+            text = text.split('translate')[-1].strip()
+            try:
+                response = translate_this(text)
+            except Exception as e:
+                response = str(e)
+            print(response)
+            update.message.reply_text(response)
+        else:
+            update.message.reply_text('Did you say: \"' + text + '\"?')
 
     def t3(self, bot, update):
         custom_kb = [['X'], ['O']]
@@ -107,16 +110,8 @@ class Zaebot:
             resp = self.witClient.speech(f, None, {'Content-Type': 'audio/mpeg3'})
         text = resp['_text'].lower()
         print(text)
-        if 'joke' in text:
-            about = text.split('joke')[-1].strip()
-            update.message.reply_text("Oh, you want a joke {}. Let's see...".format(about))
-            update.message.text = text
-            self.joke(bot, update)
-        elif 'translate' in text:
-            update.message.text = text
-            self.translate(bot, update)
-        else:
-            update.message.reply_text('Did you say: \"' + text + '\"?')
+        update.message.text = text
+        self.plain_text_manager(bot, update)
 
     # $ ffmpeg - i voice.ogg - ac 1 voice.mp3
     def convert_to_mp3(self, path):
@@ -448,6 +443,7 @@ class Zaebot:
         self.dispatcher.add_handler(conv_handler_5)
 
         solve_handler = CommandHandler('solve', self.solve, pass_args=True)
+        self.dispatcher.add_handler(solve_handler)
 
         matches_handler = ConversationHandler(
             entry_points=[CommandHandler('matches', self.matches)],
@@ -458,12 +454,8 @@ class Zaebot:
         )
         self.dispatcher.add_handler(matches_handler)
 
-        joke_handler = MessageHandler(Filters.text & joke_filter, self.joke)
-        self.dispatcher.add_handler(joke_handler)
-        translate_handler = MessageHandler(Filters.text & translate_filter, self.translate)
-        self.dispatcher.add_handler(translate_handler)
-
-        self.dispatcher.add_handler(solve_handler)
+        text_handler = MessageHandler(Filters.text, self.plain_text_manager)
+        self.dispatcher.add_handler(text_handler)
 
 
 if __name__ == '__main__':
