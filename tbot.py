@@ -205,8 +205,6 @@ class Zaebot:
 
         id = update.callback_query.message.chat_id
 
-        print(id)
-
         self.play_move(bot, update, id)
 
         if self.games[id][0].board.game_over:
@@ -292,8 +290,6 @@ class Zaebot:
     def tictac5(self, bot, update):
 
         id = update.callback_query.message.chat_id
-
-        print(id)
 
         self.play_move5(bot, update, id)
 
