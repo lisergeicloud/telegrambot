@@ -22,6 +22,7 @@ from wolfram_api_client import ask
 from joker import get_jokes
 from filters import FilterJoke, FilterTranslate
 from ya_translater import translate_this
+import re
 
 joke_filter = FilterJoke()
 translate_filter = FilterTranslate()
@@ -62,13 +63,23 @@ class Zaebot:
         self.games5 = {}
         self.human = {}
         self.witClient = wit.Wit(wit_token)
-        self.dispatcher.add_handler(MessageHandler(Filters.voice, self.voice_handler))
 
     def start(self, bot, update):
         response = ['{} {}'.format(x, y) for x, y in COMMANDS]
         response.insert(0, 'Make Your Choice:')
         response = '\n'.join(response)
         bot.send_message(chat_id=update.message.chat_id, text=response)
+
+    def another_way(self, bot, update):
+        text = update.message.text.strip().lower()
+        if re.search(r"(.*([Pp]lay|[Rr]un).*matches.*)|(fuck)", text) is not None:
+            self.matches(bot, update)
+            return 1
+        elif re.search(r".*([Pp]lay|[Rr]un).*tic.*tac.*toe.*|(oh)", text) is not None:
+            self.ttt_size(bot, update)
+            return 2
+        else:
+            self.plain_text_manager(bot, update)
 
     def plain_text_manager(self, bot, update):
         '''
@@ -82,7 +93,6 @@ class Zaebot:
                 response = get_jokes(text)
             except Exception as e:
                 response = str(e)
-            print(response)
             update.message.reply_text(response)
         elif 'translate' in text:
             text = text.split('translate')[-1].strip()
@@ -90,7 +100,6 @@ class Zaebot:
                 response = translate_this(text)
             except Exception as e:
                 response = str(e)
-            print(response)
             update.message.reply_text(response)
         else:
             text_list = text.split()
@@ -108,7 +117,7 @@ class Zaebot:
     def ttt_size(self, bot, update):
         board_size = update.message.text.strip()
         if board_size not in ['3', '5']:
-            bot.sendMessage(chat_id=update.message.chat_id, text='No. Choose 3 or 5!')
+            bot.sendMessage(chat_id=update.message.chat_id, text='Choose board size: 3 or 5!')
             return 2
         else:
             custom_kb = [['X'], ['O']]
@@ -134,7 +143,9 @@ class Zaebot:
         text = resp['_text'].lower()
         print(text)
         update.message.text = text
-        self.plain_text_manager(bot, update)
+        r_v = self.another_way(bot, update)
+        if r_v is not None:
+            return r_v
 
     # $ ffmpeg - i voice.ogg - ac 1 voice.mp3
     def convert_to_mp3(self, path):
@@ -429,14 +440,25 @@ class Zaebot:
         return code
 
     def handlers(self):
+
+        #for i in self.dispatcher.handlers[0]:
+            #self.dispatcher.remove_handler(i)
         self.dispatcher.add_handler(CommandHandler('start', self.start))
         self.dispatcher.add_handler(CommandHandler('help', self.start))
         self.dispatcher.add_handler(CommandHandler('solve', self.solve, pass_args=True))
 
+        le_voice_handler = MessageHandler(Filters.voice, self.voice_handler)
+
+        why_it_cant_be_an_entry_point = MessageHandler(Filters.text, self.another_way)
+
         conv_handler = ConversationHandler(
-            entry_points=[CommandHandler('tictactoe', self.t3),
-                          RegexHandler(pattern=".*([Pp]lay|[Rr]un).*tic.*tac.*toe.*", callback=self.t3)],
+            entry_points=[CommandHandler('matches', self.matches),
+                          CommandHandler('tictactoe', self.t3),
+                          #RegexHandler(pattern=".*([Pp]lay|[Rr]un).*tic.*tac.*toe.*", callback=self.t3),
+                          why_it_cant_be_an_entry_point,
+                          le_voice_handler],
             states={
+                1: [MessageHandler(Filters.text, self.move), CommandHandler('exit', self.exit)],
                 2: [MessageHandler(Filters.text, self.ttt_size)],
                 13: [CallbackQueryHandler(self.tictac3)],
                 15: [CallbackQueryHandler(self.tictac5)],
@@ -447,17 +469,6 @@ class Zaebot:
         )
 
         self.dispatcher.add_handler(conv_handler)
-
-        matches_handler = ConversationHandler(
-            entry_points=[CommandHandler('matches', self.matches),
-                          RegexHandler(pattern=".*([Pp]lay|[Rr]un).*matches.*", callback=self.matches)],
-            states={
-                1: [CommandHandler('exit', self.exit), MessageHandler(Filters.text, self.move)],
-            },
-            fallbacks=[CommandHandler('start', self.start)]
-        )
-        self.dispatcher.add_handler(matches_handler)
-        self.dispatcher.add_handler(MessageHandler(Filters.text, self.plain_text_manager))
 
 
 if __name__ == '__main__':
