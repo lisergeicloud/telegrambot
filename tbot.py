@@ -72,14 +72,12 @@ class Zaebot:
 
     def another_way(self, bot, update):
         text = update.message.text.strip().lower()
-        if re.search(r"(.*([Pp]lay|[Rr]un).*matches.*)|(fuck)", text) is not None:
-            self.matches(bot, update)
-            return 1
-        elif re.search(r".*([Pp]lay|[Rr]un).*tic.*tac.*toe.*|(oh)", text) is not None:
-            self.ttt_size(bot, update)
-            return 2
+        if re.search(r"(.*([Pp]lay|[Rr]un).*matches.*)", text) is not None:
+            return self.matches(bot, update)
+        elif re.search(r".*([Pp]lay|[Rr]un).*tic.*tac.*toe.*", text) is not None:
+            return self.ttt_size(bot, update)
         else:
-            self.plain_text_manager(bot, update)
+            return self.plain_text_manager(bot, update)
 
     def plain_text_manager(self, bot, update):
         '''
@@ -107,8 +105,8 @@ class Zaebot:
                 if w in text_list:
                     text = text.split(w)[-1].strip()
                     self.solve(bot, update, text.split())
-                    return
             update.message.reply_text('Did you say: \"' + text + '\"?')
+        return -1
 
     def t3(self, bot, update):
         bot.sendMessage(chat_id=update.message.chat_id, text='Choose board size: 3 or 5')
@@ -143,9 +141,7 @@ class Zaebot:
         text = resp['_text'].lower()
         print(text)
         update.message.text = text
-        r_v = self.another_way(bot, update)
-        if r_v is not None:
-            return r_v
+        return self.another_way(bot, update)
 
     # $ ffmpeg - i voice.ogg - ac 1 voice.mp3
     def convert_to_mp3(self, path):
