@@ -70,21 +70,16 @@ class Zaebot:
         response = '\n'.join(response)
         bot.send_message(chat_id=update.message.chat_id, text=response)
 
-    def another_way(self, bot, update):
-        text = update.message.text.strip().lower()
-        if re.search(r"(.*([Pp]lay|[Rr]un).*matches.*)", text) is not None:
-            return self.matches(bot, update)
-        elif re.search(r".*([Pp]lay|[Rr]un).*tic.*tac.*toe.*", text) is not None:
-            return self.ttt_size(bot, update)
-        else:
-            return self.plain_text_manager(bot, update)
-
     def plain_text_manager(self, bot, update):
         '''
         This function parses plain text messages and executes correspondent rules. 
         '''
         text = update.message.text.strip().lower()
-        if 'joke' in text:
+        if re.search(r"(.*([Pp]lay|[Rr]un).*matches.*)", text) is not None:
+            return self.matches(bot, update)
+        elif re.search(r".*([Pp]lay|[Rr]un).*(tic.*tac.*toe.*|deductible)", text) is not None:
+            return self.ttt_size(bot, update)
+        elif 'joke' in text:
             about = text.split('joke')[-1].strip()
             update.message.reply_text("Oh, you want a joke {}. Let's see...".format(about))
             try:
@@ -105,6 +100,7 @@ class Zaebot:
                 if w in text_list:
                     text = text.split(w)[-1].strip()
                     self.solve(bot, update, text.split())
+                    return -1
             update.message.reply_text('Did you say: \"' + text + '\"?')
         return -1
 
@@ -141,7 +137,7 @@ class Zaebot:
         text = resp['_text'].lower()
         print(text)
         update.message.text = text
-        return self.another_way(bot, update)
+        return self.plain_text_manager(bot, update)
 
     # $ ffmpeg - i voice.ogg - ac 1 voice.mp3
     def convert_to_mp3(self, path):
@@ -437,22 +433,18 @@ class Zaebot:
 
     def handlers(self):
 
-        #for i in self.dispatcher.handlers[0]:
-            #self.dispatcher.remove_handler(i)
+        # for i in self.dispatcher.handlers[0]:
+        # self.dispatcher.remove_handler(i)
         self.dispatcher.add_handler(CommandHandler('start', self.start))
         self.dispatcher.add_handler(CommandHandler('help', self.start))
         self.dispatcher.add_handler(CommandHandler('solve', self.solve, pass_args=True))
 
-        le_voice_handler = MessageHandler(Filters.voice, self.voice_handler)
-
-        why_it_cant_be_an_entry_point = MessageHandler(Filters.text, self.another_way)
-
         conv_handler = ConversationHandler(
             entry_points=[CommandHandler('matches', self.matches),
                           CommandHandler('tictactoe', self.t3),
-                          #RegexHandler(pattern=".*([Pp]lay|[Rr]un).*tic.*tac.*toe.*", callback=self.t3),
-                          why_it_cant_be_an_entry_point,
-                          le_voice_handler],
+                          # RegexHandler(pattern=".*([Pp]lay|[Rr]un).*tic.*tac.*toe.*", callback=self.t3),
+                          MessageHandler(Filters.voice, self.voice_handler),
+                          MessageHandler(Filters.text, self.plain_text_manager)],
             states={
                 1: [MessageHandler(Filters.text, self.move), CommandHandler('exit', self.exit)],
                 2: [MessageHandler(Filters.text, self.ttt_size)],
