@@ -43,16 +43,17 @@ class MatchesGame:
         else:
             TOTAL1, TOTAL2, bot_takes = self.process_move(value)
             response.append('You took {} matches --> {} matches left.'.format(value, TOTAL1))
-            response.append('I take {} matches --> {} matches left.'.format(bot_takes, TOTAL2))
             if TOTAL1 == 1:
                 response.append('You win! :) Congratulations!')
                 del ACTIVE_GAMES[self.CHAT_ID]
                 return -1, response
             if TOTAL2 == 1:
+                response.append('I take {} matches --> {} matches left.'.format(bot_takes, TOTAL2))
                 response.append('YOU LOST. :( The game is finished.')
                 del ACTIVE_GAMES[self.CHAT_ID]
                 return -1, response
             else:
+                response.append('I take {} matches --> {} matches left.'.format(bot_takes, TOTAL2))
                 response.append('Your turn.')
                 return 1, response
 
