@@ -9,10 +9,8 @@ from telegram.ext import (Updater, Filters,
                           CallbackQueryHandler,
                           MessageHandler, RegexHandler)
 
-import board
-import console
-import gomokuboard
-import gomokuconsole
+from tictactoe import board, console, gomokuboard, gomokuconsole
+from tictactoe.tictactoe import get_reply, run_move
 from matches_game import MatchesGame, ACTIVE_GAMES
 from mytokens import *
 from wolfram_api_client import ask
@@ -20,7 +18,6 @@ from joker import get_jokes
 from filters import FilterJoke, FilterTranslate
 from ya_translater import translate_this
 from speech import voice_handler
-from tictactoe import get_reply, run_move
 
 joke_filter = FilterJoke()
 translate_filter = FilterTranslate()
@@ -168,12 +165,10 @@ class Tbot:
         board_size = game[3]
         _board = BOARDS[board_size]
         mc = game[0].board.move_count
-
         if game[0].board.get_turn() == game[2]:
             self.get_player_move(bot, update, id)
         else:
             run_move(game)
-
         for i in range(board_size):
             for j in range(board_size):
                 if game[0].board.board[i][j] == _board.State.X:
@@ -182,9 +177,7 @@ class Tbot:
                 elif game[0].board.board[i][j] == _board.State.O:
                     game[1][i][j] = telegram.InlineKeyboardButton('⭕️',
                                                                   callback_data=str(i * board_size + j))
-
         reply = InlineKeyboardMarkup(game[1])
-
         if game[0].board.move_count == 1 and game[2] == _board.State.O:
             pass
         elif mc < game[0].board.move_count:
@@ -213,7 +206,6 @@ class Tbot:
         board_size = game[3]
         _board = BOARDS[board_size]
         winner = game[0].board.get_winner()
-
         if winner == _board.State.Blank:
             s = "The TicTacToe is a Draw."
         else:
@@ -224,9 +216,7 @@ class Tbot:
                     s = "You won!"
                 else:
                     s = "AI won!"
-
         s += "\nTo start a new game press please /tictactoe"
-
         query = update.callback_query
         reply = InlineKeyboardMarkup(game[1])
         bot.editMessageText(chat_id=query.message.chat_id,

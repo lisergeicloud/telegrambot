@@ -1,14 +1,11 @@
-import alphabeta
-import gomokuboard
-import evaluation
+from tictactoe import board, alphabeta
 
 
 class Console:
-
     def __init__(self, width):
-        self.board = gomokuboard.GomokuBoard(width)
-        self.human = gomokuboard.State.X
-        self.ai = gomokuboard.State.O
+        self.board = board.Board(width)
+        self.human = board.State.X
+        self.ai = board.State.O
 
     def play(self):
 
@@ -36,16 +33,15 @@ class Console:
         if self.board.get_turn() == self.human:
             self.get_player_move()
         else:
-            if self.board.move_count == 0:
-                pl_mv = evaluation.firstmove(self.board)
-            elif self.board.move_count == 1:
-                pl_mv = evaluation.secondmove(self.board)
+            abp = alphabeta.AlphaBetaPruning(self.board.board_width ** 2 - 1)
+            if self.board.board_width > 3:
+                m_p = 5
             else:
-                pl_mv = evaluation.nextMove(self.board, 2, 3)
-            self.board.move(pl_mv)
+                m_p = self.board.board_width ** 2 - 1
+            abp.run(player=self.board.get_turn(), board=self.board, max_ply=m_p)
 
     def print_game_status(self):
-        print("\n" + str(self.board) + "\n")
+        print("\n" + self.board.to_string() + "\n")
         print(self.board.get_turn().name + "'s turn")
 
     def get_player_move(self):
@@ -66,9 +62,9 @@ class Console:
     def print_winner(self):
         winner = self.board.get_winner()
 
-        print("\n" + str(self.board) + "\n")
+        print("\n" + self.board.to_string() + "\n")
 
-        if winner == gomokuboard.State.Blank:
+        if winner == board.State.Blank:
             print("The TicTacToe is a Draw.")
         else:
             print("Player " + str(winner.name) + " wins!")
@@ -100,12 +96,12 @@ class Console:
             try:
                 ans = input("Choose your side: (X/O): ").upper()
                 if ans == 'X':
-                    self.human = gomokuboard.State.X
-                    self.ai = gomokuboard.State.O
+                    self.human = board.State.X
+                    self.ai = board.State.O
                     return
                 elif ans in ['O', '0']:
-                    self.human = gomokuboard.State.O
-                    self.ai = gomokuboard.State.X
+                    self.human = board.State.O
+                    self.ai = board.State.X
                     return
                 else:
                     raise ValueError
@@ -118,4 +114,4 @@ def game(n):
 
 
 if __name__ == '__main__':
-    game(8)
+    game(3)

@@ -1,15 +1,17 @@
 import queue as q
-import gomokuboard
 import time
 import random
 import copy
 
+from tictactoe import gomokuboard
 
-def firstmove (board):
+
+def firstmove(board):
     x = board.board_width // 2
     return x * board.board_width + x
 
-def secondmove (board):
+
+def secondmove(board):
     x, y = 0, 0
     for i in range(board.board_width):
         for j in range(board.board_width):
@@ -29,7 +31,7 @@ def secondmove (board):
     return (x + dx) * board.board_width + (y + dy)
 
 
-def randommove (board):
+def randommove(board):
     t = True
     while t:
         index = random.randint(0, board.board_width ** 2 - 1)
@@ -54,7 +56,9 @@ def _eval_func(board, index, attack):
             for i in range(1, gomokuboard.WINNING):
                 py = y + dy * i * s
                 px = x + dx * i * s
-                if ((not board.in_board(py, px) or board.board[py][px] == opp) or (i + 1 == gomokuboard.WINNING and board.in_board(py + dy * s, px + dx * s) and board.board[py + dy * s][px + dx * s] == colour)):
+                if ((not board.in_board(py, px) or board.board[py][px] == opp) or (
+                                i + 1 == gomokuboard.WINNING and board.in_board(py + dy * s, px + dx * s) and
+                        board.board[py + dy * s][px + dx * s] == colour)):
                     break
                 elif s > 0:
                     pathlist.append(board.board[py][px])
@@ -64,10 +68,11 @@ def _eval_func(board, index, attack):
         path_num = len(pathlist) - gomokuboard.WINNING + 1
         if path_num > 0:
             for i in range(path_num):
-                consec = pathlist[i:i+gomokuboard.WINNING].count(colour)
+                consec = pathlist[i:i + gomokuboard.WINNING].count(colour)
                 total_consec += consec ** 5 if consec != gomokuboard.WINNING - 1 else 100 ** (9 if attack else 8)
 
     return total_consec
+
 
 def evaluate_position(board, p):
     pos = p[0] * board.board_width + p[1]
@@ -103,7 +108,7 @@ def topAtoms(board, limit):
                 spots.add(m)
 
     for r in spots:
-        topqueue.put((evaluate_position(board, r)*(-1), r))
+        topqueue.put((evaluate_position(board, r) * (-1), r))
 
     toplist = []
     i = 0
@@ -131,7 +136,7 @@ def dive3(board, dlimit, st_time, tlimit):
         return - dive3(nextboard, dlimit - 1, st_time, tlimit)
 
 
-def nextMove(board, tlimit, dive = 3):
+def nextMove(board, tlimit, dive=3):
     check_top = 10
     check_depth = 20
     atomlist = topAtoms(board, check_top)
@@ -163,4 +168,3 @@ def nextMove(board, tlimit, dive = 3):
         return mehlist[-1][1][0] * board.board_width + mehlist[-1][1][1]
     else:
         return atomlist[0][1][0] * board.board_width + atomlist[0][1][1]
-

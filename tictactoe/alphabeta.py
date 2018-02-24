@@ -1,9 +1,9 @@
 import math
 import copy
-from board import State, Board
+from tictactoe.board import State, Board
+
 
 class AlphaBetaPruning:
-
     def __init__(self, max_ply):
         self.max_ply = max_ply
 

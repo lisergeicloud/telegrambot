@@ -1,7 +1,6 @@
 import telegram
 
-import alphabeta
-import evaluation
+from tictactoe import alphabeta, evaluation
 
 
 def get_reply(board_size):
