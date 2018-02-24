@@ -17,7 +17,7 @@ from wolfram_api_client import ask
 from joker import get_jokes
 from filters import FilterJoke, FilterTranslate
 from ya_translater import translate_this
-from speech import voice_handler
+from speech import speech_to_text
 
 joke_filter = FilterJoke()
 translate_filter = FilterTranslate()
@@ -45,13 +45,10 @@ class Tbot:
     - It can play “tic-tac-toe” and “matches”
     - It can play XO 5-in-a-row
     """
-    token = telegram_token
-    board_size = 3
 
     def __init__(self):
-
         self.custom_kb = []
-        self.updater = Updater(token=self.token)
+        self.updater = Updater(token=telegram_token)
         self.bot = self.updater.bot
         self.dispatcher = self.updater.dispatcher
         self.games = {}
@@ -64,9 +61,7 @@ class Tbot:
         bot.send_message(chat_id=update.message.chat_id, text=response)
 
     def plain_text_manager(self, bot, update):
-        '''
-        This function parses plain text messages and executes correspondent rules. 
-        '''
+        """ This function parses plain text messages and executes correspondent rules. """
         text = update.message.text.strip().lower()
         if re.search(r"(.*(play|run).*matches.*)", text, re.IGNORECASE) is not None:
             return self.matches(bot, update)
@@ -98,21 +93,24 @@ class Tbot:
         return -1
 
     def voice_handler(self, bot, update):
+        """ Voice recognition """
         file = self.bot.getFile(update.message.voice.file_id)
         print("file_id: " + str(update.message.voice.file_id))
-        text = voice_handler(file)
+        text = speech_to_text(file)
         print(text)
         update.message.text = text
         return self.plain_text_manager(bot, update)
 
     def ttt(self, bot, update):
-        bot.sendMessage(chat_id=update.message.chat_id, text='Choose board size: 3 or 5')
+        """ Tictactoe start """
+        bot.sendMessage(chat_id=update.message.chat_id, text='Choose board size: 3 or 8')
         return 2
 
     def ttt_size(self, bot, update):
+        """ Tictactoe choose board size """
         board_size = update.message.text.strip()
-        if board_size not in ['3', '5']:
-            bot.sendMessage(chat_id=update.message.chat_id, text='Choose board size: 3 or 5!')
+        if board_size not in ['3', '8']:
+            bot.sendMessage(chat_id=update.message.chat_id, text='Choose board size: 3 or 8!')
             return 2
         else:
             custom_kb = [['X'], ['O']]
@@ -121,14 +119,17 @@ class Tbot:
             return int(board_size)
 
     def ttt3(self, bot, update):
+        """ Tictactoe size 3 """
         self.ttt_helper(bot, update, board_size=3)
         return 7
 
     def ttt5(self, bot, update):
+        """ Tictactoe size 8 """
         self.ttt_helper(bot, update, board_size=8)
         return 7
 
     def ttt_helper(self, bot, update, board_size):
+        """ Tictactoe helper """
         _board = BOARDS[board_size]
         _console = CONSOLS[board_size]
         try:
@@ -149,6 +150,7 @@ class Tbot:
         bot.send_message(chat_id=update.message.chat_id, text='Let\'s play, my dear opponent! ', reply_markup=reply)
 
     def tictac(self, bot, update):
+        """ Tictactoe """
         id = update.callback_query.message.chat_id
         self.play_move(bot, update, id)
         if self.games[id][0].board.game_over:
@@ -161,6 +163,7 @@ class Tbot:
         return 7
 
     def play_move(self, bot, update, id):
+        """ Tictactoe """
         game = self.games[id]
         board_size = game[3]
         _board = BOARDS[board_size]
@@ -187,6 +190,7 @@ class Tbot:
                                 reply_markup=reply)
 
     def get_player_move(self, bot, update, id):
+        """ Tictactoe """
         game = self.games[id]
         move = int(update.callback_query.data)
         if not game[0].board.move(move):
@@ -202,6 +206,7 @@ class Tbot:
                 pass
 
     def get_winner(self, bot, update, id):
+        """ Tictactoe """
         game = self.games[id]
         board_size = game[3]
         _board = BOARDS[board_size]
@@ -227,9 +232,7 @@ class Tbot:
         del self.games[id]
 
     def solve(self, bot, update, args):
-        """
-        Solve math tasks using Wolfram Alpha.
-        """
+        """ Solve math tasks using Wolfram Alpha. """
         request = ' '.join(args)
         result = ask(request)
         if result is None:
@@ -237,9 +240,7 @@ class Tbot:
         bot.send_message(chat_id=update.message.chat_id, text=result)
 
     def matches(self, bot, update):
-        """
-        Matches Game. 
-        """
+        """ Matches Game. """
         game = ACTIVE_GAMES.get(update.message.chat_id, None)
         if game is None:
             game = MatchesGame(chat_id=update.message.chat_id)
@@ -249,9 +250,7 @@ class Tbot:
         return 1
 
     def exit(self, bot, update):
-        """
-        Exit Matches Game.
-        """
+        """ Exit Matches Game. """
         try:
             del ACTIVE_GAMES[update.message.chat_id]
         except KeyError:
@@ -261,9 +260,7 @@ class Tbot:
         return -1
 
     def move(self, bot, update):
-        """
-        Handles Matches moves.
-        """
+        """ Handles Matches moves. """
         text = update.message.text.strip()
         game = ACTIVE_GAMES.get(update.message.chat_id, None)
         code = 1
@@ -274,7 +271,6 @@ class Tbot:
         return code
 
     def handlers(self):
-
         self.dispatcher.add_handler(CommandHandler('start', self.start))
         self.dispatcher.add_handler(CommandHandler('help', self.start))
         self.dispatcher.add_handler(CommandHandler('solve', self.solve, pass_args=True))
@@ -284,13 +280,12 @@ class Tbot:
                           CommandHandler('tictactoe', self.ttt),
                           MessageHandler(Filters.voice, self.voice_handler),
                           MessageHandler(Filters.text, self.plain_text_manager)],
-            states={
-                1: [MessageHandler(Filters.text, self.move), CommandHandler('exit', self.exit)],
-                2: [MessageHandler(Filters.text, self.ttt_size)],
-                7: [CallbackQueryHandler(self.tictac)],
-                3: [MessageHandler(Filters.text, self.ttt3), CallbackQueryHandler(self.ttt3)],
-                5: [MessageHandler(Filters.text, self.ttt5), CallbackQueryHandler(self.ttt5)]
-            },
+            states={1: [MessageHandler(Filters.text, self.move), CommandHandler('exit', self.exit)],
+                    2: [MessageHandler(Filters.text, self.ttt_size)],
+                    7: [CallbackQueryHandler(self.tictac)],
+                    3: [MessageHandler(Filters.text, self.ttt3), CallbackQueryHandler(self.ttt3)],
+                    8: [MessageHandler(Filters.text, self.ttt5), CallbackQueryHandler(self.ttt5)]
+                    },
             fallbacks=[CommandHandler('start', self.start)]
         )
 

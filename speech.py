@@ -6,7 +6,7 @@ from mytokens import wit_token
 witClient = wit.Wit(wit_token)
 
 
-def voice_handler(file):
+def speech_to_text(file):
     path = 'voice.ogg'
     file.download(path)
     output = convert_to_mp3(path)
