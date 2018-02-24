@@ -9,10 +9,8 @@ from telegram.ext import (Updater, Filters,
                           CallbackQueryHandler,
                           MessageHandler, RegexHandler)
 
-import alphabeta
 import board
 import console
-import evaluation
 import gomokuboard
 import gomokuconsole
 from matches_game import MatchesGame, ACTIVE_GAMES
@@ -22,12 +20,10 @@ from joker import get_jokes
 from filters import FilterJoke, FilterTranslate
 from ya_translater import translate_this
 from speech import voice_handler
-from tictactoe import get_reply
+from tictactoe import get_reply, run_move
 
 joke_filter = FilterJoke()
 translate_filter = FilterTranslate()
-
-SECOND = 2
 
 COMMANDS = [
     ('/tictactoe', 'Tic-Tac-Toe 3X3'),
@@ -129,11 +125,11 @@ class Tbot:
 
     def ttt3(self, bot, update):
         self.ttt_helper(bot, update, board_size=3)
-        return 13
+        return 7
 
     def ttt5(self, bot, update):
         self.ttt_helper(bot, update, board_size=8)
-        return 15
+        return 7
 
     def ttt_helper(self, bot, update, board_size):
         _board = BOARDS[board_size]
@@ -155,51 +151,41 @@ class Tbot:
 
         bot.send_message(chat_id=update.message.chat_id, text='Let\'s play, my dear opponent! ', reply_markup=reply)
 
-    def tictac3(self, bot, update):
-
+    def tictac(self, bot, update):
         id = update.callback_query.message.chat_id
-
         self.play_move(bot, update, id)
-
         if self.games[id][0].board.game_over:
             self.get_winner(bot, update, id)
             return -1
-
         self.play_move(bot, update, id)
-
         if self.games[id][0].board.game_over:
             self.get_winner(bot, update, id)
             return -1
-
-        return 13
+        return 7
 
     def play_move(self, bot, update, id):
         game = self.games[id]
         board_size = game[3]
+        _board = BOARDS[board_size]
         mc = game[0].board.move_count
 
         if game[0].board.get_turn() == game[2]:
             self.get_player_move(bot, update, id)
         else:
-            abp = alphabeta.AlphaBetaPruning(game[0].board.board_width ** 2 - 1)
-            if game[0].board.board_width > 3:
-                m_p = 5
-            else:
-                m_p = game[0].board.board_width ** 2 - 1
-            abp.run(player=game[0].board.get_turn(), board=game[0].board, max_ply=m_p)
+            run_move(game)
 
         for i in range(board_size):
             for j in range(board_size):
-                if game[0].board.board[i][j] == board.State.X:
+                if game[0].board.board[i][j] == _board.State.X:
                     game[1][i][j] = telegram.InlineKeyboardButton("❌",
                                                                   callback_data=str(i * board_size + j))
-                elif game[0].board.board[i][j] == board.State.O:
+                elif game[0].board.board[i][j] == _board.State.O:
                     game[1][i][j] = telegram.InlineKeyboardButton('⭕️',
                                                                   callback_data=str(i * board_size + j))
 
         reply = InlineKeyboardMarkup(game[1])
 
-        if game[0].board.move_count == 1 and game[2] == board.State.O:
+        if game[0].board.move_count == 1 and game[2] == _board.State.O:
             pass
         elif mc < game[0].board.move_count:
             bot.editMessageText(chat_id=update.callback_query.message.chat_id,
@@ -223,99 +209,31 @@ class Tbot:
                 pass
 
     def get_winner(self, bot, update, id):
-        winner = self.games[id][0].board.get_winner()
-
-        if winner == board.State.Blank:
-            s = "The TicTacToe is a Draw."
-        else:
-            s = "Player " + str(winner.name) + " wins!"
-
-        s += "\nTo start a new game press please /tictactoe"
-
-        query = update.callback_query
-        reply = InlineKeyboardMarkup(self.games[id][1])
-        bot.editMessageText(
-            chat_id=query.message.chat_id,
-            message_id=query.message.message_id,
-            text=s,
-            reply_markup=reply
-        )
-        del self.games[id]
-
-    def tictac5(self, bot, update):
-
-        id = update.callback_query.message.chat_id
-
-        self.play_move5(bot, update, id)
-
-        if self.games[id][0].board.game_over:
-            self.get_winner5(bot, update, id)
-            return -1
-
-        self.play_move5(bot, update, id)
-
-        if self.games[id][0].board.game_over:
-            self.get_winner5(bot, update, id)
-            return -1
-
-        return 15
-
-    def play_move5(self, bot, update, id):
         game = self.games[id]
         board_size = game[3]
-        mc = game[0].board.move_count
+        _board = BOARDS[board_size]
+        winner = game[0].board.get_winner()
 
-        if game[0].board.get_turn() == game[2]:
-            self.get_player_move(bot, update, id)
-        else:
-            if game[0].board.move_count == 0:
-                pl_mv = evaluation.firstmove(game[0].board)
-            elif game[0].board.move_count == 1:
-                pl_mv = evaluation.secondmove(game[0].board)
-            else:
-                pl_mv = evaluation.nextMove(game[0].board, 2, 3)
-            game[0].board.move(pl_mv)
-
-        for i in range(board_size):
-            for j in range(board_size):
-                if game[0].board.board[i][j] == gomokuboard.State.X:
-                    game[1][i][j] = telegram.InlineKeyboardButton("❌",
-                                                                  callback_data=str(i * board_size + j))
-                elif game[0].board.board[i][j] == gomokuboard.State.O:
-                    game[1][i][j] = telegram.InlineKeyboardButton('⭕️',
-                                                                  callback_data=str(i * board_size + j))
-
-        reply = InlineKeyboardMarkup(game[1])
-
-        if game[0].board.move_count == 1 and game[2] == gomokuboard.State.O:
-            pass
-        elif mc < game[0].board.move_count:
-            bot.editMessageText(chat_id=update.callback_query.message.chat_id,
-                                message_id=update.callback_query.message.message_id,
-                                text='Let\'s play, my dear opponent! ',
-                                reply_markup=reply)
-
-    def get_winner5(self, bot, update, id):
-        winner = self.games[id][0].board.get_winner()
-
-        if winner == gomokuboard.State.Blank:
+        if winner == _board.State.Blank:
             s = "The TicTacToe is a Draw."
         else:
-            if winner == self.games[id][2]:
-                s = "You won!"
-            else:
-                s = "AI won!"
+            if board_size == 3:
+                s = "Player " + str(winner.name) + " wins!"
+            elif board_size == 8:
+                if winner == self.games[id][2]:
+                    s = "You won!"
+                else:
+                    s = "AI won!"
 
         s += "\nTo start a new game press please /tictactoe"
 
         query = update.callback_query
-        reply = InlineKeyboardMarkup(self.games[id][1])
-        bot.editMessageText(
-            chat_id=query.message.chat_id,
-            message_id=query.message.message_id,
-            text=s,
-            reply_markup=reply
-        )
+        reply = InlineKeyboardMarkup(game[1])
+        bot.editMessageText(chat_id=query.message.chat_id,
+                            message_id=query.message.message_id,
+                            text=s,
+                            reply_markup=reply
+                            )
         del self.games[id]
 
     def solve(self, bot, update, args):
@@ -379,8 +297,7 @@ class Tbot:
             states={
                 1: [MessageHandler(Filters.text, self.move), CommandHandler('exit', self.exit)],
                 2: [MessageHandler(Filters.text, self.ttt_size)],
-                13: [CallbackQueryHandler(self.tictac3)],
-                15: [CallbackQueryHandler(self.tictac5)],
+                7: [CallbackQueryHandler(self.tictac)],
                 3: [MessageHandler(Filters.text, self.ttt3), CallbackQueryHandler(self.ttt3)],
                 5: [MessageHandler(Filters.text, self.ttt5), CallbackQueryHandler(self.ttt5)]
             },
