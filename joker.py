@@ -28,6 +28,9 @@ def get_jokes(question):
         question.remove('joke')
         question.remove('tell')
         question.remove('give')
+        question.remove('say')
+        question.remove('talk')
+        question.remove('provide')
     except:
         pass
     curr_vec = np.zeros(100)
