@@ -22,6 +22,7 @@ from joker import get_jokes
 from filters import FilterJoke, FilterTranslate
 from ya_translater import translate_this
 from speech import voice_handler
+from tictactoe import get_reply
 
 joke_filter = FilterJoke()
 translate_filter = FilterTranslate()
@@ -102,9 +103,13 @@ class Tbot:
             update.message.reply_text('Did you say: \"' + text + '\"?')
         return -1
 
-    def t3(self, bot, update):
-        bot.sendMessage(chat_id=update.message.chat_id, text='Choose board size: 3 or 5')
-        return 2
+    def voice_handler(self, bot, update):
+        file = self.bot.getFile(update.message.voice.file_id)
+        print("file_id: " + str(update.message.voice.file_id))
+        text = voice_handler(file)
+        print(text)
+        update.message.text = text
+        return self.plain_text_manager(bot, update)
 
     def ttt_size(self, bot, update):
         board_size = update.message.text.strip()
@@ -117,19 +122,15 @@ class Tbot:
             bot.sendMessage(chat_id=update.message.chat_id, text='Choose your side:', reply_markup=reply)
             return int(board_size)
 
+    def t3(self, bot, update):
+        bot.sendMessage(chat_id=update.message.chat_id, text='Choose board size: 3 or 5')
+        return 2
+
     def t5(self, bot, update):
         custom_kb = [['X'], ['O']]
         reply = telegram.ReplyKeyboardMarkup(custom_kb)
         bot.sendMessage(chat_id=update.message.chat_id, text='Choose your side:', reply_markup=reply)
         return 0
-
-    def voice_handler(self, bot, update):
-        file = self.bot.getFile(update.message.voice.file_id)
-        print("file_id: " + str(update.message.voice.file_id))
-        text = voice_handler(file)
-        print(text)
-        update.message.text = text
-        return self.plain_text_manager(bot, update)
 
     def ttt3(self, bot, update):
         try:
@@ -139,17 +140,12 @@ class Tbot:
                 human_move = board.State.O
         except:
             pass
-        reply = telegram.ReplyKeyboardRemove()
-        bot.send_message(chat_id=update.message.chat_id, text='Preparing...', reply_markup=reply)
+        bot.send_message(chat_id=update.message.chat_id, text='Preparing...',
+                         reply_markup=telegram.ReplyKeyboardRemove())
         self.board_size = 3
-        self.games[update.message.chat_id] = [console.Console(self.board_size), [], human_move]
-
-        for i in range(0, 9, 3):
-            self.games[update.message.chat_id][1].append([telegram.InlineKeyboardButton(' ', callback_data=str(i)),
-                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i + 1)),
-                                                          telegram.InlineKeyboardButton(' ', callback_data=str(i + 2))])
+        reply = get_reply(self.board_size)
+        self.games[update.message.chat_id] = [console.Console(self.board_size), reply, human_move]
         reply = InlineKeyboardMarkup(self.games[update.message.chat_id][1])
-
         if human_move == board.State.O:
             self.play_move(bot, update, update.message.chat_id)
 
@@ -165,22 +161,12 @@ class Tbot:
                 human_move = gomokuboard.State.O
         except:
             pass
-        reply = telegram.ReplyKeyboardRemove()
-        bot.send_message(chat_id=update.message.chat_id, text='Preparing...', reply_markup=reply)
+        bot.send_message(chat_id=update.message.chat_id, text='Preparing...',
+                         reply_markup=telegram.ReplyKeyboardRemove())
         self.board_size = 8
-        self.games5[update.message.chat_id] = [gomokuconsole.Console(self.board_size), [], human_move]
-        for i in range(0, 64, 8):
-            self.games5[update.message.chat_id][1].append([telegram.InlineKeyboardButton(' ', callback_data=str(i)),
-                                                           telegram.InlineKeyboardButton(' ', callback_data=str(i + 1)),
-                                                           telegram.InlineKeyboardButton(' ', callback_data=str(i + 2)),
-                                                           telegram.InlineKeyboardButton(' ', callback_data=str(i + 3)),
-                                                           telegram.InlineKeyboardButton(' ', callback_data=str(i + 4)),
-                                                           telegram.InlineKeyboardButton(' ', callback_data=str(i + 5)),
-                                                           telegram.InlineKeyboardButton(' ', callback_data=str(i + 6)),
-                                                           telegram.InlineKeyboardButton(' ',
-                                                                                         callback_data=str(i + 7))])
+        reply = get_reply(self.board_size)
+        self.games5[update.message.chat_id] = [gomokuconsole.Console(self.board_size), reply, human_move]
         reply = InlineKeyboardMarkup(self.games5[update.message.chat_id][1])
-
         if human_move == gomokuboard.State.O:
             self.play_move5(bot, update, update.message.chat_id)
 
