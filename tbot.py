@@ -1,8 +1,7 @@
 import logging
-
-import ffmpy
+import re
 import telegram
-import wit
+
 from telegram import InlineKeyboardMarkup
 from telegram.ext import (Updater, Filters,
                           CommandHandler,
@@ -22,7 +21,7 @@ from wolfram_api_client import ask
 from joker import get_jokes
 from filters import FilterJoke, FilterTranslate
 from ya_translater import translate_this
-import re
+from speech import voice_handler
 
 joke_filter = FilterJoke()
 translate_filter = FilterTranslate()
@@ -62,7 +61,6 @@ class Tbot:
         self.games = {}
         self.games5 = {}
         self.human = {}
-        self.witClient = wit.Wit(wit_token)
 
     def start(self, bot, update):
         response = ['{} {}'.format(x, y) for x, y in COMMANDS]
@@ -123,29 +121,15 @@ class Tbot:
         custom_kb = [['X'], ['O']]
         reply = telegram.ReplyKeyboardMarkup(custom_kb)
         bot.sendMessage(chat_id=update.message.chat_id, text='Choose your side:', reply_markup=reply)
-
         return 0
 
     def voice_handler(self, bot, update):
         file = self.bot.getFile(update.message.voice.file_id)
         print("file_id: " + str(update.message.voice.file_id))
-        path = 'voice.ogg'
-        file.download(path)
-        output = self.convert_to_mp3(path)
-        with open(output, 'rb') as f:
-            resp = self.witClient.speech(f, None, {'Content-Type': 'audio/mpeg3'})
-        text = resp['_text'].lower()
+        text = voice_handler(file)
         print(text)
         update.message.text = text
         return self.plain_text_manager(bot, update)
-
-    # $ ffmpeg - i voice.ogg - ac 1 voice.mp3
-    def convert_to_mp3(self, path):
-        output = 'voice.mp3'
-        ff = ffmpy.FFmpeg(global_options=['-y'], inputs={path: None}, outputs={output: '-ac 1'})
-        print(ff.cmd)
-        ff.run()
-        return output
 
     def ttt3(self, bot, update):
         try:
