@@ -42,7 +42,7 @@ GAME_COMMANDS = ['play', 'run']
 SOLVE_COMMANDS = ['estimate', 'solve', 'calculate', 'compute', 'quantify', 'assess', 'evaluate']
 
 
-class Zaebot:
+class Tbot:
     """
     Telegram bot with the following functionalities:
     - It is self-explanatory.
@@ -458,7 +458,7 @@ class Zaebot:
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-    bot = Zaebot()
+    bot = Tbot()
     bot.handlers()
     bot.updater.start_polling()
     bot.updater.idle()
