@@ -54,6 +54,7 @@ class Tbot:
         self.dispatcher = self.updater.dispatcher
         self.games = {}
         self.human = {}
+        self.detector = detector.Detector()
 
     def start(self, bot, update):
         response = ['{} {}'.format(x, y) for x, y in COMMANDS]
@@ -292,7 +293,7 @@ class Tbot:
 
         # TODO add the waiting message
 
-        entities = detector.recon()
+        entities = self.detector.recon()
         if len(entities) == 1:
             k = "I think that there's "
         else:
@@ -321,6 +322,7 @@ class Tbot:
         bot.send_photo(chat_id=chat_id, photo=open('recon.jpg', 'rb'), caption=k[:200])
         return -1
 
+    # TODO api for face recognition
     def recognize_face(self, bot, update):
         """ Face recognition. """
         pass
