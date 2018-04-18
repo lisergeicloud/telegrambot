@@ -37,6 +37,8 @@ COMMANDS = [
     ('Ask for a joke: ', '"Tell me a joke about ..."'),
     ('Ask for a translation: ', '"Translate ..."'),
     ('', 'You can use voice input function.'),
+    ('/faces', 'Identify person on the photo.'),
+    ('/recon', 'Recognize objects on the image.'),
 ]
 
 GAME_COMMANDS = ['play', 'run']
@@ -316,6 +318,7 @@ class Tbot:
         for entity in entities:
             d[entity] = d.get(entity, 0) + 1
 
+        blacklist = ''
         if len(entities) > 0:
             blacklist = entities[-1]
 
@@ -355,7 +358,7 @@ class Tbot:
         candidates = [c['candidates'] for c in results]
         # print(candidates)
 
-        message = "I can see"
+        message = "I can see "
         for c in candidates:
             if len(c) > 0:
                 p_id = c[0]['personId']
@@ -365,6 +368,7 @@ class Tbot:
                 message = "I can not recognize anybody"
 
         bot.send_message(chat_id=update.message.chat_id, text=message)
+        return -1
 
     def handlers(self):
         self.dispatcher.add_handler(CommandHandler('start', self.start))
