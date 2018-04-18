@@ -4,3 +4,4 @@ wolframalpha==3.0
 wit==4.3.0
 ffmpy==0.2.2
 yandex.translate==0.3.5
+cognitive_face==1.4.1

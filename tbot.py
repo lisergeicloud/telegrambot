@@ -1,25 +1,31 @@
 import logging
-import re
-import telegram
 import random
+import re
 
+import cognitive_face as CF
+import telegram
+from darknet.examples import detector
 from telegram import InlineKeyboardMarkup, ParseMode
 from telegram.ext import (Updater, Filters,
                           CommandHandler,
                           ConversationHandler,
                           CallbackQueryHandler,
-                          MessageHandler, RegexHandler)
+                          MessageHandler)
 
-from tictactoe import board, console, gomokuboard, gomokuconsole
-from tictactoe.tictactoe import get_reply, run_move
+from filters import FilterJoke, FilterTranslate
+from joker import get_jokes, docvectors
 from matches_game import MatchesGame, ACTIVE_GAMES
 from mytokens import *
-from wolfram_api_client import ask
-from joker import get_jokes, docvectors
-from filters import FilterJoke, FilterTranslate
-from ya_translater import translate_this
 from speech import speech_to_text
-from darknet.examples import detector
+from tictactoe import board, console, gomokuboard, gomokuconsole
+from tictactoe.tictactoe import get_reply, run_move
+from wolfram_api_client import ask
+from ya_translater import translate_this
+
+CF.Key.set(cf_token)
+
+BASE_URL = 'https://westcentralus.api.cognitive.microsoft.com/face/v1.0'  # Replace with your regional Base URL
+CF.BaseUrl.set(BASE_URL)
 
 joke_filter = FilterJoke()
 translate_filter = FilterTranslate()
@@ -336,14 +342,34 @@ class Tbot:
         new_image.download('faces.jpg')
 
         # return an image with a caption
-        bot.send_photo(chat_id=chat_id, photo=open('faces.jpg', 'rb'), caption="It's not a Stas")
-        return -1
+        # bot.send_photo(chat_id=chat_id, photo=open('faces.jpg', 'rb'), caption="It's not a Stas")
+
+        group_id = "rabbits"
+        img = "faces.jpg"
+        faces = CF.face.detect(img)
+
+        face_ids = [f['faceId'] for f in faces]
+
+        results = CF.face.identify(face_ids, group_id)
+
+        candidates = [c['candidates'] for c in results]
+        # print(candidates)
+
+        message = "I can see"
+        for c in candidates:
+            if len(c) > 0:
+                p_id = c[0]['personId']
+                p = CF.person.get(group_id, p_id)
+                message = message + p['name']
+            else:
+                message = "I can not recognize anybody"
+
+        bot.send_message(chat_id=update.message.chat_id, text=message)
 
     def handlers(self):
         self.dispatcher.add_handler(CommandHandler('start', self.start))
         self.dispatcher.add_handler(CommandHandler('help', self.start))
         self.dispatcher.add_handler(CommandHandler('solve', self.solve, pass_args=True))
-
 
         conv_handler = ConversationHandler(
             entry_points=[CommandHandler('matches', self.matches),
