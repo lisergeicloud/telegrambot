@@ -18,6 +18,7 @@ from joker import get_jokes
 from filters import FilterJoke, FilterTranslate
 from ya_translater import translate_this
 from speech import speech_to_text
+from darknet.examples import detector
 
 joke_filter = FilterJoke()
 translate_filter = FilterTranslate()
@@ -270,10 +271,54 @@ class Tbot:
                 bot.send_message(chat_id=update.message.chat_id, text=r)
         return code
 
+    def recognize_image(self, bot, update):
+        """
+        Objects recognition on the image
+        """
+        # get image
+        chat_id = update.message.chat_id
+        new_image = bot.get_file(update.message.photo[-1].file_id)
+        new_image.download('recon.jpg')
+
+        # TODO add the waiting message
+
+        entities = detector.recon()
+        if len(entities) == 1:
+            k = "I think that here's "
+        else:
+            k = "I think that here're "
+
+        # TODO remove debug
+        print(entities)
+
+        # TODO group similar objects
+        d = {}
+        for e in entities:
+            d[e] = d.get(e, 0) + 1
+
+        blacklist = entities[-1]
+
+        # TODO make a separate function for "NLG"
+        for i in d:
+            if i != blacklist:
+                k += detector.NLG(i, d[i], False, False)
+
+        if len(d) > 0:
+            k += detector.NLG(blacklist, d[blacklist], True, False if len(d) == 1 else True)
+        else:
+            k = "I can't recognize anything :("
+
+        # return an image with a caption
+        bot.send_photo(chat_id=chat_id, photo=open('recon.jpg', 'rb'), caption=k[:200])
+
     def handlers(self):
         self.dispatcher.add_handler(CommandHandler('start', self.start))
         self.dispatcher.add_handler(CommandHandler('help', self.start))
         self.dispatcher.add_handler(CommandHandler('solve', self.solve, pass_args=True))
+
+        # TODO - wrap into conversation
+        # TODO - remove this handler from the bot
+        self.dispatcher.add_handler(MessageHandler(Filters.photo, self.recognize_image))
 
         conv_handler = ConversationHandler(
             entry_points=[CommandHandler('matches', self.matches),
@@ -296,5 +341,5 @@ if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
     bot = Tbot()
     bot.handlers()
-    bot.updater.start_polling()
+    bot.updater.start_polling(timeout=60)
     bot.updater.idle()
