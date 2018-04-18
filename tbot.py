@@ -70,6 +70,7 @@ class Tbot:
         response.insert(0, 'Make Your Choice:')
         response = '\n'.join(response)
         bot.send_message(chat_id=update.message.chat_id, text=response)
+        return -1
 
     def plain_text_manager(self, bot, update):
         """ This function parses plain text messages and executes correspondent rules. """
