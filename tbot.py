@@ -335,8 +335,24 @@ class Tbot:
         new_image = bot.get_file(update.message.photo[-1].file_id)
         new_image.download('faces.jpg')
 
+        faces = CF.face.detect(new_image)
+        face_ids = [f['faceId'] for f in faces]
+        results = CF.face.identify(face_ids, group_id)
+        candidates = [c['candidates'] for c in results]
+
+        def person_name(c):
+            if len(c) > 0:
+                p_id = c[0]['personId']
+                p = CF.person.get(group_id, p_id)
+                return p['name']
+            else:
+                return 'Unknown person'
+
+        people = list(map(person_name, candidates))
+        caption = "Found the following people: " + ", ".join(people)
+
         # return an image with a caption
-        bot.send_photo(chat_id=chat_id, photo=open('faces.jpg', 'rb'), caption="It's not a Stas")
+        bot.send_photo(chat_id=chat_id, photo=open('faces.jpg', 'rb'), caption=caption)
         return -1
 
     def handlers(self):
