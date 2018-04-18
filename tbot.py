@@ -2,7 +2,7 @@ import logging
 import re
 import telegram
 
-from telegram import InlineKeyboardMarkup
+from telegram import InlineKeyboardMarkup, ParseMode
 from telegram.ext import (Updater, Filters,
                           CommandHandler,
                           ConversationHandler,
@@ -271,10 +271,20 @@ class Tbot:
                 bot.send_message(chat_id=update.message.chat_id, text=r)
         return code
 
+    def image_handler(self, bot, update):
+        """ Handles image processing commands. """
+        text = update.message.text
+        if text.startswith('/recon'):
+            bot.sendMessage(chat_id=update.message.chat_id, text='*Object recognition*\nSend me an image',
+                            parse_mode=ParseMode.MARKDOWN)
+            return 1
+        elif text.startswith('/faces'):
+            bot.sendMessage(chat_id=update.message.chat_id, text='*Face recognition*\nSend me an image',
+                            parse_mode=ParseMode.MARKDOWN)
+            return 2
+
     def recognize_image(self, bot, update):
-        """
-        Objects recognition on the image
-        """
+        """ Objects recognition on the image. """
         # get image
         chat_id = update.message.chat_id
         new_image = bot.get_file(update.message.photo[-1].file_id)
@@ -284,41 +294,42 @@ class Tbot:
 
         entities = detector.recon()
         if len(entities) == 1:
-            k = "I think that here's "
+            k = "I think that there's "
         else:
-            k = "I think that here're "
+            k = "I think that there're "
 
         # TODO remove debug
         print(entities)
 
-        # TODO group similar objects
         d = {}
         for e in entities:
             d[e] = d.get(e, 0) + 1
 
         blacklist = entities[-1]
 
-        # TODO make a separate function for "NLG"
         for i in d:
             if i != blacklist:
                 k += detector.NLG(i, d[i], False, False)
 
         if len(d) > 0:
             k += detector.NLG(blacklist, d[blacklist], True, False if len(d) == 1 else True)
+            k += ' on the picture'
         else:
             k = "I can't recognize anything :("
 
         # return an image with a caption
         bot.send_photo(chat_id=chat_id, photo=open('recon.jpg', 'rb'), caption=k[:200])
+        return -1
+
+    def recognize_face(self, bot, update):
+        """ Face recognition. """
+        pass
 
     def handlers(self):
         self.dispatcher.add_handler(CommandHandler('start', self.start))
         self.dispatcher.add_handler(CommandHandler('help', self.start))
         self.dispatcher.add_handler(CommandHandler('solve', self.solve, pass_args=True))
 
-        # TODO - wrap into conversation
-        # TODO - remove this handler from the bot
-        self.dispatcher.add_handler(MessageHandler(Filters.photo, self.recognize_image))
 
         conv_handler = ConversationHandler(
             entry_points=[CommandHandler('matches', self.matches),
@@ -334,7 +345,17 @@ class Tbot:
             fallbacks=[CommandHandler('start', self.start)]
         )
 
+        conv_handler_image = ConversationHandler(
+            entry_points=[CommandHandler('recon', self.image_handler),
+                          CommandHandler('faces', self.image_handler)],
+            states={1: [MessageHandler(Filters.photo, self.recognize_image)],
+                    2: [MessageHandler(Filters.photo, self.recognize_face)],
+                    },
+            fallbacks=[CommandHandler('start', self.start)]
+        )
+
         self.dispatcher.add_handler(conv_handler)
+        self.dispatcher.add_handler(conv_handler_image)
 
 
 if __name__ == '__main__':
