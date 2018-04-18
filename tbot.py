@@ -1,6 +1,7 @@
 import logging
 import re
 import telegram
+import random
 
 from telegram import InlineKeyboardMarkup, ParseMode
 from telegram.ext import (Updater, Filters,
@@ -14,7 +15,7 @@ from tictactoe.tictactoe import get_reply, run_move
 from matches_game import MatchesGame, ACTIVE_GAMES
 from mytokens import *
 from wolfram_api_client import ask
-from joker import get_jokes
+from joker import get_jokes, docvectors
 from filters import FilterJoke, FilterTranslate
 from ya_translater import translate_this
 from speech import speech_to_text
@@ -291,7 +292,13 @@ class Tbot:
         new_image = bot.get_file(update.message.photo[-1].file_id)
         new_image.download('recon.jpg')
 
-        # TODO add the waiting message
+        group_of_items = [i for i in range(len(docvectors))]
+        num_to_select = 3
+        list_of_random_items = random.sample(group_of_items, num_to_select)
+        jokes = '🤔\nIt would take a while to recognize objects on the image, so read the jokes while you wait :)\n\n'
+        for joke in list_of_random_items:
+            jokes += '- ' + docvectors[joke][1] + "\n\n"
+        bot.sendMessage(chat_id=update.message.chat_id, text=jokes)
 
         entities = self.detector.recon()
         if len(entities) == 1:
@@ -299,14 +306,12 @@ class Tbot:
         else:
             k = "I think that there're "
 
-        # TODO remove debug
-        print(entities)
-
         d = {}
         for entity in entities:
             d[entity] = d.get(entity, 0) + 1
 
-        blacklist = entities[-1]
+        if len(entities) > 0:
+            blacklist = entities[-1]
 
         for i in d:
             if i != blacklist:
@@ -330,6 +335,8 @@ class Tbot:
         new_image = bot.get_file(update.message.photo[-1].file_id)
         new_image.download('faces.jpg')
 
+        # return an image with a caption
+        bot.send_photo(chat_id=chat_id, photo=open('faces.jpg', 'rb'), caption="It's not a Stas")
         return -1
 
     def handlers(self):
