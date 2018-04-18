@@ -303,8 +303,8 @@ class Tbot:
         print(entities)
 
         d = {}
-        for e in entities:
-            d[e] = d.get(e, 0) + 1
+        for entity in entities:
+            d[entity] = d.get(entity, 0) + 1
 
         blacklist = entities[-1]
 
@@ -325,7 +325,12 @@ class Tbot:
     # TODO api for face recognition
     def recognize_face(self, bot, update):
         """ Face recognition. """
-        pass
+        # get image
+        chat_id = update.message.chat_id
+        new_image = bot.get_file(update.message.photo[-1].file_id)
+        new_image.download('faces.jpg')
+
+        return -1
 
     def handlers(self):
         self.dispatcher.add_handler(CommandHandler('start', self.start))
