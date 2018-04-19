@@ -309,30 +309,34 @@ class Tbot:
             jokes += '- ' + docvectors[joke][1] + "\n\n"
         bot.sendMessage(chat_id=update.message.chat_id, text=jokes)
 
-        entities = self.detector.recon()
-        if len(entities) == 1:
-            k = "I think that there's "
-        else:
-            k = "I think that there're "
+        try:
+            entities = self.detector.recon()
+            if len(entities) == 1:
+                k = "I think that there's "
+            else:
+                k = "I think that there're "
 
-        d = {}
-        for entity in entities:
-            d[entity] = d.get(entity, 0) + 1
+            d = {}
+            for entity in entities:
+                d[entity] = d.get(entity, 0) + 1
 
-        blacklist = ''
-        if len(entities) > 0:
-            blacklist = entities[-1]
+            blacklist = ''
+            if len(entities) > 0:
+                blacklist = entities[-1]
 
-        for i in d:
-            if i != blacklist:
-                k += detector.NLG(i, d[i], False, False)
+            for i in d:
+                if i != blacklist:
+                    k += detector.NLG(i, d[i], False, False)
 
-        if len(d) > 0:
-            k += detector.NLG(blacklist, d[blacklist], True, False if len(d) == 1 else True)
-            k += ' on the picture'
-        else:
-            k = "I can't recognize anything :("
-
+            if len(d) > 0:
+                k += detector.NLG(blacklist, d[blacklist], True, False if len(d) == 1 else True)
+                k += ' on the picture'
+            else:
+                k = "I can't recognize anything :("
+        except:
+            message = "Technical problem. Please, try other features of the bot."
+            bot.send_message(chat_id=update.message.chat_id, text=message)
+            return -1
         # return an image with a caption
         bot.send_photo(chat_id=chat_id, photo=open('recon.jpg', 'rb'), caption=k[:200])
         return -1
@@ -369,7 +373,7 @@ class Tbot:
                 else:
                     message = "I can not recognize anybody"
         except:
-            message = "I don't know. And don't care."
+            message = "Technical problem. Please, try other features of the bot."
         bot.send_message(chat_id=update.message.chat_id, text=message)
         return -1
 
