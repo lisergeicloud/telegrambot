@@ -288,11 +288,11 @@ class Tbot:
         if text.startswith('/recon'):
             bot.sendMessage(chat_id=update.message.chat_id, text='*Object recognition*\nSend me an image',
                             parse_mode=ParseMode.MARKDOWN)
-            return 1
+            return 10
         elif text.startswith('/faces'):
             bot.sendMessage(chat_id=update.message.chat_id, text='*Face recognition*\nSend me an image',
                             parse_mode=ParseMode.MARKDOWN)
-            return 2
+            return 11
 
     def recognize_image(self, bot, update):
         """ Objects recognition on the image. """
@@ -350,24 +350,26 @@ class Tbot:
 
         group_id = "rabbits"
         img = "faces.jpg"
-        faces = CF.face.detect(img)
+        try:
+            faces = CF.face.detect(img)
 
-        face_ids = [f['faceId'] for f in faces]
+            face_ids = [f['faceId'] for f in faces]
 
-        results = CF.face.identify(face_ids, group_id)
+            results = CF.face.identify(face_ids, group_id)
 
-        candidates = [c['candidates'] for c in results]
-        # print(candidates)
+            candidates = [c['candidates'] for c in results]
+            # print(candidates)
 
-        message = "I can see "
-        for c in candidates:
-            if len(c) > 0:
-                p_id = c[0]['personId']
-                p = CF.person.get(group_id, p_id)
-                message = message + p['name']
-            else:
-                message = "I can not recognize anybody"
-
+            message = "I can see "
+            for c in candidates:
+                if len(c) > 0:
+                    p_id = c[0]['personId']
+                    p = CF.person.get(group_id, p_id)
+                    message = message + p['name']
+                else:
+                    message = "I can not recognize anybody"
+        except:
+            message = "I don't know. And don't care."
         bot.send_message(chat_id=update.message.chat_id, text=message)
         return -1
 
@@ -379,28 +381,22 @@ class Tbot:
         conv_handler = ConversationHandler(
             entry_points=[CommandHandler('matches', self.matches),
                           CommandHandler('tictactoe', self.ttt),
+                          CommandHandler('recon', self.image_handler),
+                          CommandHandler('faces', self.image_handler),
                           MessageHandler(Filters.voice, self.voice_handler),
                           MessageHandler(Filters.text, self.plain_text_manager)],
             states={1: [MessageHandler(Filters.text, self.move), CommandHandler('exit', self.exit)],
                     2: [MessageHandler(Filters.text, self.ttt_size)],
                     7: [CallbackQueryHandler(self.tictac)],
                     3: [MessageHandler(Filters.text, self.ttt3), CallbackQueryHandler(self.ttt3)],
-                    8: [MessageHandler(Filters.text, self.ttt5), CallbackQueryHandler(self.ttt5)]
-                    },
-            fallbacks=[CommandHandler('start', self.start)]
-        )
-
-        conv_handler_image = ConversationHandler(
-            entry_points=[CommandHandler('recon', self.image_handler),
-                          CommandHandler('faces', self.image_handler)],
-            states={1: [MessageHandler(Filters.photo, self.recognize_image)],
-                    2: [MessageHandler(Filters.photo, self.recognize_face)],
+                    8: [MessageHandler(Filters.text, self.ttt5), CallbackQueryHandler(self.ttt5)],
+                    10: [MessageHandler(Filters.photo, self.recognize_image)],
+                    11: [MessageHandler(Filters.photo, self.recognize_face)],
                     },
             fallbacks=[CommandHandler('start', self.start)]
         )
 
         self.dispatcher.add_handler(conv_handler)
-        self.dispatcher.add_handler(conv_handler_image)
 
 
 if __name__ == '__main__':
