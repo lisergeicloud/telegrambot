@@ -67,7 +67,7 @@ class Tbot:
 
     def start(self, bot, update):
         response = ['{} {}'.format(x, y) for x, y in COMMANDS]
-        response.insert(0, 'Make Your Choice:')
+        response.insert(0, 'Wubbalubbadubdub! Make your choice, Morty:')
         response = '\n'.join(response)
         bot.send_message(chat_id=update.message.chat_id, text=response)
         return -1
@@ -81,7 +81,7 @@ class Tbot:
             return self.ttt_size(bot, update)
         elif 'joke' in text:
             about = text.split('joke')[-1].strip()
-            update.message.reply_text("Oh, you want a joke {}. Let's see...".format(about))
+            update.message.reply_text("Oh, you want a joke {}, Morty. Let's see...".format(about))
             try:
                 response = get_jokes(text)
             except Exception as e:
@@ -101,7 +101,7 @@ class Tbot:
                     text = text.split(w)[-1].strip()
                     self.solve(bot, update, text.split())
                     return -1
-            update.message.reply_text('Did you say: \"' + text + '\"?')
+            update.message.reply_text('Did you say: \"' + text + '\", Morty?')
         return -1
 
     def voice_handler(self, bot, update):
@@ -127,7 +127,7 @@ class Tbot:
         else:
             custom_kb = [['X'], ['O']]
             reply = telegram.ReplyKeyboardMarkup(custom_kb)
-            bot.sendMessage(chat_id=update.message.chat_id, text='Choose your side:', reply_markup=reply)
+            bot.sendMessage(chat_id=update.message.chat_id, text='Choose your side, Morty:', reply_markup=reply)
             return int(board_size)
 
     def ttt3(self, bot, update):
@@ -159,7 +159,7 @@ class Tbot:
         if human_move == _board.State.O:
             self.play_move(bot, update, update.message.chat_id)
 
-        bot.send_message(chat_id=update.message.chat_id, text='Let\'s play, my dear opponent! ', reply_markup=reply)
+        bot.send_message(chat_id=update.message.chat_id, text='Let\'s play, Morty! ', reply_markup=reply)
 
     def tictac(self, bot, update):
         """ Tictactoe """
@@ -198,7 +198,7 @@ class Tbot:
         elif mc < game[0].board.move_count:
             bot.editMessageText(chat_id=update.callback_query.message.chat_id,
                                 message_id=update.callback_query.message.message_id,
-                                text='Let\'s play, my dear opponent! ',
+                                text='Let\'s play, Morty! ',
                                 reply_markup=reply)
 
     def get_player_move(self, bot, update, id):
@@ -211,7 +211,7 @@ class Tbot:
                 reply = InlineKeyboardMarkup(game[1])
                 bot.editMessageText(chat_id=query.message.chat_id,
                                     message_id=query.message.message_id,
-                                    text="Press on the blank box please",
+                                    text="Press on the blank box, Morty.",
                                     reply_markup=reply
                                     )
             except telegram.error.BadRequest:
@@ -230,10 +230,10 @@ class Tbot:
                 s = "Player " + str(winner.name) + " wins!"
             elif board_size == 8:
                 if winner == self.games[id][2]:
-                    s = "You won!"
+                    s = "You won! But this happend just by accident, Morty."
                 else:
-                    s = "AI won!"
-        s += "\nTo start a new game press please /tictactoe"
+                    s = "I won! Morty, I'm not sure you are my grandson."
+        s += "\nTo start a new game press /tictactoe"
         query = update.callback_query
         reply = InlineKeyboardMarkup(game[1])
         bot.editMessageText(chat_id=query.message.chat_id,
@@ -248,7 +248,7 @@ class Tbot:
         request = ' '.join(args)
         result = ask(request)
         if result is None:
-            result = "I don't know!"
+            result = "I don't know, Morty."
         bot.send_message(chat_id=update.message.chat_id, text=result)
 
     def matches(self, bot, update):
@@ -258,7 +258,7 @@ class Tbot:
             game = MatchesGame(chat_id=update.message.chat_id)
             ACTIVE_GAMES[update.message.chat_id] = game
         bot.send_message(chat_id=update.message.chat_id, text=game.RULES)
-        bot.send_message(chat_id=update.message.chat_id, text='Do you want to make first move? (y/n)')
+        bot.send_message(chat_id=update.message.chat_id, text='Do you want to make first move, Morty? (y/n)')
         return 1
 
     def exit(self, bot, update):
@@ -267,7 +267,7 @@ class Tbot:
             del ACTIVE_GAMES[update.message.chat_id]
         except KeyError:
             pass
-        response = "The game is finished."
+        response = "The game is finished, Morty."
         bot.send_message(chat_id=update.message.chat_id, text=response)
         return -1
 
@@ -304,7 +304,7 @@ class Tbot:
         group_of_items = [i for i in range(len(docvectors))]
         num_to_select = 3
         list_of_random_items = random.sample(group_of_items, num_to_select)
-        jokes = '🤔\nIt would take a while to recognize objects on the image, so read the jokes while you wait :)\n\n'
+        jokes = '🤔\nIt would take a while to recognize objects on the image, Morty. Your grandfather will tell some jokes while you wait :)\n\n'
         for joke in list_of_random_items:
             jokes += '- ' + docvectors[joke][1] + "\n\n"
         bot.sendMessage(chat_id=update.message.chat_id, text=jokes)
@@ -312,9 +312,9 @@ class Tbot:
         try:
             entities = self.detector.recon()
             if len(entities) == 1:
-                k = "I think that there's "
+                k = "Are you blind, Morty? There's "
             else:
-                k = "I think that there're "
+                k = "Are you blind, Morty? There're "
 
             d = {}
             for entity in entities:
@@ -332,9 +332,9 @@ class Tbot:
                 k += detector.NLG(blacklist, d[blacklist], True, False if len(d) == 1 else True)
                 k += ' on the picture'
             else:
-                k = "I can't recognize anything :("
+                k = "I can't recognize anything, Morty. Get lost!"
         except:
-            message = "Technical problem. Please, try other features of the bot."
+            message = "You broke it again, Morty!"
             bot.send_message(chat_id=update.message.chat_id, text=message)
             return -1
         # return an image with a caption
@@ -371,9 +371,9 @@ class Tbot:
                     p = CF.person.get(group_id, p_id)
                     message = message + p['name']
                 else:
-                    message = "I can not recognize anybody"
+                    message = "I can not recognize anybody, Morty!"
         except:
-            message = "Technical problem. Please, try other features of the bot."
+            message = "You broke it again, Morty!"
         bot.send_message(chat_id=update.message.chat_id, text=message)
         return -1
 
