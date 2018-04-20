@@ -18,6 +18,7 @@ cf_token = 'lllllllllllllllllllllllllllll'
 > pip3 install -r requirements.txt
 
 > apt install ffmpeg
+
 > git clone https://github.com/pjreddie/darknet (specify `repo_directory` in `mytokens.py`)
 
 ### 3. Download "docvectors.pickle" file (213.42 MB) from [here](https://drive.google.com/file/d/1ef1llYF35FSQhtE-xhlv3P0cBlPccrw9/view?usp=sharing) and put it into the project folder.
