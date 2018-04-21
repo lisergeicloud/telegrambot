@@ -1,5 +1,5 @@
 # Practical AI - Telegram bot "Rick"
-####The bot can play with you in Tic-Tac-Toe and Matches games, solve math tasks, translate from English to Russian, identify person on the photo, and recognize objects on the image. You can use voice input to interact with the bot.
+###The bot can play with you in Tic-Tac-Toe and Matches games, solve math tasks, translate from English to Russian, identify person on the photo, and recognize objects on the image. You can use voice input to interact with the bot.
 ## Group M2:
 * Anton Shilov
 * Ivan Osadchiy
