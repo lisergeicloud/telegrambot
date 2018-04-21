@@ -28,33 +28,33 @@ class MatchesGame:
                 response.append('I take {} matches --> {} matches left. Your turn.'.format(bot_takes, TOTAL2))
                 self.CHOOSE_ORDER_MODE = False
             else:
-                response.append('Yes or No? (y/n)')
+                response.append('Yes or No? (y/n). This is so f*cking simple, Morty!')
             return 1, response
         try:
             value = int(text)
         except ValueError:
-            result = 'No. You can enter only a number from 1 to 4.'
+            result = 'No, Morty. Focus! You can enter only a number from 1 to 4.'
             response.append(result)
             return 1, response
         if not text.isdigit() or value not in [1, 2, 3, 4]:
-            result = 'No. You can enter only a number from 1 to 4.'
+            result = 'No, Morty. Focus! You can enter only a number from 1 to 4.'
             response.append(result)
             return 1, response
         else:
             TOTAL1, TOTAL2, bot_takes = self.process_move(value)
             response.append('You took {} matches --> {} matches left.'.format(value, TOTAL1))
             if TOTAL1 == 1:
-                response.append('You win! :) Congratulations!')
+                response.append('You won! But this happend just by accident, Morty.')
                 del ACTIVE_GAMES[self.CHAT_ID]
                 return -1, response
             if TOTAL2 == 1:
                 response.append('I take {} matches --> {} matches left.'.format(bot_takes, TOTAL2))
-                response.append('YOU LOST. :( The game is finished.')
+                response.append('I won! Morty, I am not sure you are my grandson.')
                 del ACTIVE_GAMES[self.CHAT_ID]
                 return -1, response
             else:
                 response.append('I take {} matches --> {} matches left.'.format(bot_takes, TOTAL2))
-                response.append('Your turn.')
+                response.append("Your turn. Don't make me wait long.")
                 return 1, response
 
     def process_move(self, matches_taken):
