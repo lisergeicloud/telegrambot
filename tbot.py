@@ -31,7 +31,7 @@ joke_filter = FilterJoke()
 translate_filter = FilterTranslate()
 
 COMMANDS = [
-    ('/tictactoe', 'Tic-Tac-Toe 3X3'),
+    ('/tictactoe', 'Tic-Tac-Toe 3X3 and 8X8'),
     ('/matches', 'Matches Game'),
     ('/solve', 'Solve math tasks. Example: /solve x^3=27'),
     ('Ask for a joke: ', '"Tell me a joke about ..."'),
